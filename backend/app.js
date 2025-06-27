@@ -6,6 +6,7 @@ const path = require('path');
 const authRoutes = require('./routes/auth');
 const customersRouter = require('./routes/customers');
 const productsRouter = require('./routes/products');
+const contactRouter = require('./routes/contact');
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
 app.use('/api', authRoutes);
 app.use('/api/customers', customersRouter);
 app.use('/api/products', productsRouter);
+app.use('/api/contact', contactRouter);
 
 
 app.listen(3001, () => {

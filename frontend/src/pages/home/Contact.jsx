@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 
 // Mock components - replace with your actual components
@@ -7,7 +7,7 @@ import Slidebar from '../../components/Slidebar';
 import Footer from '../../components/Footer';
 
 function Contact() {
-  const host = import.meta.env.VITE_HOST; 
+  const host = import.meta.env.VITE_HOST;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,6 +15,18 @@ function Contact() {
     subject: '',
     message: ''
   });
+  const [contactInfo, setContactInfo] = useState(null);
+
+  useEffect(() => {
+    fetch(`${host}/api/contact`)
+      .then((res) => res.json())
+      .then((data) => {
+        setContactInfo(data);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch contact info:', err);
+      });
+  }, [host]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -24,34 +36,34 @@ function Contact() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const response = await fetch(`${host}/api/contact`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    });
-
-    if (response.ok) {
-      alert('ขอบคุณสำหรับข้อความของคุณ! เราจะติดต่อกลับในเร็วๆ นี้');
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
+    try {
+      const response = await fetch(`${host}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
       });
-    } else {
-      alert('เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่');
+
+      if (response.ok) {
+        alert('ขอบคุณสำหรับข้อความของคุณ! เราจะติดต่อกลับในเร็วๆ นี้');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        alert('เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('มีบางอย่างผิดพลาด กรุณาลองใหม่ภายหลัง');
     }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('มีบางอย่างผิดพลาด กรุณาลองใหม่ภายหลัง');
-  }
-};
+  };
 
 
   return (
@@ -73,7 +85,7 @@ function Contact() {
           <div className="grid lg:grid-cols-2 gap-12">
             
             {/* Contact Form */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
+            <form className="bg-white rounded-lg shadow-lg p-8" onSubmit={handleSubmit}>
               <h2 className="text-2xl font-bold text-gray-800 mb-6">ส่งข้อความถึงเรา</h2>
               <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -150,7 +162,7 @@ function Contact() {
                   <span>ส่งข้อความ</span>
                 </button>
               </div>
-            </div>
+            </form>
 
             {/* Contact Info & Map */}
             <div className="space-y-8">
@@ -162,7 +174,7 @@ function Contact() {
                     <MapPin className="text-blue-600 mt-1" size={24} />
                     <div>
                       <h3 className="font-semibold text-gray-800">ที่อยู่</h3>
-                      <p className="text-gray-600">123 ถนนธุรกิจ แขวงลุมพินี<br />เขตปทุมวัน กรุงเทพมหานคร 10330</p>
+                      <p className="text-gray-600">{contactInfo?.address || '123 ถนนธุรกิจ แขวงลุมพินี\nเขตปทุมวัน กรุงเทพมหานคร 10330'}</p>
                     </div>
                   </div>
                   
@@ -170,7 +182,7 @@ function Contact() {
                     <Phone className="text-blue-600 mt-1" size={24} />
                     <div>
                       <h3 className="font-semibold text-gray-800">โทรศัพท์</h3>
-                      <p className="text-gray-600">+66 2 123 4567<br />+66 8 1234 5678</p>
+                      <p className="text-gray-600">{contactInfo?.phone || '+66 2 123 4567\n+66 8 1234 5678'}</p>
                     </div>
                   </div>
                   
@@ -178,7 +190,7 @@ function Contact() {
                     <Mail className="text-blue-600 mt-1" size={24} />
                     <div>
                       <h3 className="font-semibold text-gray-800">อีเมล</h3>
-                      <p className="text-gray-600">info@yourcompany.com<br />contact@yourcompany.com</p>
+                      <p className="text-gray-600">{contactInfo?.email || 'info@yourcompany.com\ncontact@yourcompany.com'}</p>
                     </div>
                   </div>
                   
@@ -186,7 +198,7 @@ function Contact() {
                     <Clock className="text-blue-600 mt-1" size={24} />
                     <div>
                       <h3 className="font-semibold text-gray-800">เวลาทำการ</h3>
-                      <p className="text-gray-600">จันทร์ - ศุกร์: 9:00 - 18:00<br />เสาร์: 9:00 - 16:00<br />อาทิตย์: ปิด</p>
+                      <p className="text-gray-600">{contactInfo?.open_hours || 'จันทร์ - ศุกร์: 9:00 - 18:00\nเสาร์: 9:00 - 16:00\nอาทิตย์: ปิด'}</p>
                     </div>
                   </div>
                 </div>
@@ -200,7 +212,7 @@ function Contact() {
                 <div className="h-80 bg-gray-200 relative">
                   {/* Embedded Google Map */}
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15502.766155364!2d100.52631367775878!3d13.744677989738!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29ecf0c07f717%3A0x79ed12f8532b73e!2z4Lil4Li44Lih4Lie4Li04LiZ4Li14LmMIOC4geC4o-C4uOC5iOC4h-C5gOC4l-C4nuC4oeC4q-C4suC4hOC4oyAxMDMzMA!5e0!3m2!1sth!2sth!4v1647234567890!5m2!1sth!2sth"
+                    src={contactInfo?.map || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15502.766155364!2d100.52631367775878!3d13.744677989738!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29ecf0c07f717%3A0x79ed12f8532b73e!2z4Lil4Li44Lih4Lie4Li04LiZ4Li14LmMIOC4geC4o-C4uOC5iOC4h-C5gOC4l-C4nuC4oeC4q-C4suC4hOC4oyAxMDMzMA!5e0!3m2!1sth!2sth!4v1647234567890!5m2!1sth!2sth"}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -214,7 +226,7 @@ function Contact() {
                     <div className="text-center">
                       <MapPin size={48} className="mx-auto mb-2" />
                       <p>แผนที่ Google Maps</p>
-                      <p className="text-sm">123 ถนนธุรกิจ แขวงลุมพินี เขตปทุมวัน</p>
+                      <p className="text-sm">{contactInfo?.address || '123 ถนนธุรกิจ แขวงลุมพินี เขตปทุมวัน'}</p>
                     </div>
                   </div>
                 </div>
