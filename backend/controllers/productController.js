@@ -27,10 +27,21 @@ const uploadProductImage = upload.single('image'); // ใช้กับ field n
 // 1. Get all products
 const getAllProducts = async (req, res) => {
   try {
-    const rows = await db('products').select(
-      'id', 'name', 'description', 'category_id', 'price', 'quantity',
-      'image_url', 'status', 'created_at', 'updated_at'
-    );
+    const rows = await db('products')
+      .leftJoin('category', 'products.category_id', 'category.category_id')
+      .select(
+        'products.id',
+        'products.name',
+        'products.description',
+        'products.category_id',
+        'category.category_name',
+        'products.price',
+        'products.quantity',
+        'products.image_url',
+        'products.status',
+        'products.created_at',
+        'products.updated_at'
+      );
     res.json(rows);
   } catch (error) {
     console.error('Error fetching products:', error.message);
@@ -85,12 +96,14 @@ const updateProduct = async (req, res) => {
 
     // ถ้ามีการอัปโหลดรูปใหม่ (req.file)
     if (req.file) {
-      updateData.image_url = `public/uploads/products/${req.file.filename}`;
+      updateData.image_url = `/uploads/products/${req.file.filename}`;
     }
 
     await db('products').where({ id }).update(updateData);
 
-    res.json({ message: 'Product updated successfully' });
+    // ดึงข้อมูล product ที่อัปเดตล่าสุดส่งกลับไป
+    const updatedProduct = await db('products').where({ id }).first();
+    res.json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error.message);
     res.status(500).json({ message: 'Internal server error' });
@@ -103,6 +116,14 @@ const deleteProduct = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // ดึง path รูปภาพก่อนลบ
+    const product = await db('products').where({ id }).first();
+    if (product && product.image_url) {
+      const imagePath = path.join(__dirname, '..', 'public', product.image_url);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
     await db('products').where({ id }).del();
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {

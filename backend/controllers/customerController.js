@@ -40,7 +40,11 @@ exports.changeCustomerStatus = async (req, res) => {
   }
 };
 
-// ลงทะเบียนลูกค้า (เข้าสู่ระบบ)
+const jwt = require('jsonwebtoken');
+const { setAuthCookie } = require('../utils/authCookie');
+const JWT_SECRET = process.env.JWT_SECRET || 'alshop_secret_key';
+const JWT_EXPIRES = '7d';
+
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -56,7 +60,10 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'รหัสผ่านไม่ถูกต้อง' });
     }
 
-    // หากผ่านการตรวจสอบ ส่งข้อมูลพื้นฐานกลับไป
+    // สร้าง JWT token
+    const token = jwt.sign({ user_id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    setAuthCookie(res, token);
+
     res.status(200).json({
       message: 'เข้าสู่ระบบสำเร็จ',
       user: {

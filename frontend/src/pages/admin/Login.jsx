@@ -18,34 +18,36 @@ export default function Login() {
       const res = await fetch(`${host}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // สำคัญมากสำหรับ cookie auth
         body: JSON.stringify(form)
       });
       const data = await res.json();
+      console.log('LOGIN DEBUG', res.status, data); // <--- เพิ่ม debug
       setVariant(res.ok ? 'success' : 'danger');
       setMessage(data.message);
 
       if (res.ok) {
-        localStorage.setItem('token', data.token);
-        
-        Swal.fire({
-          icon: 'success',
-          title: 'เข้าสู่ระบบสำเร็จ',
-          showConfirmButton: false,
-          timer: 1500
-        }).then(() => {
-          navigate('/admin/dashboard');
-        });
-      }
-    } catch {
+  Swal.fire({
+    icon: 'success',
+    title: 'เข้าสู่ระบบสำเร็จ',
+    showConfirmButton: false,
+    timer: 1000
+  });
+  setTimeout(() => {
+    console.log('Navigating to /admin/dashboard');
+    navigate('/admin/dashboard');
+  }, 1100);
+}
+    } catch (err) {
       setVariant('danger');
       setMessage('Error connecting to server');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-300">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 to-green-300">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h3 className="text-2xl font-bold text-center mb-6 text-blue-700">Admin</h3>
+        <h3 className="text-2xl font-bold text-center mb-6 text-green-700">Admin</h3>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-gray-700 font-medium mb-1">Username</label>
@@ -56,7 +58,7 @@ export default function Login() {
               onChange={handleChange}
               placeholder="Enter username"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
             />
           </div>
           <div>
@@ -68,12 +70,12 @@ export default function Login() {
               onChange={handleChange}
               placeholder="Enter password"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200 shadow"
+            className="w-full py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-200 shadow"
           >
             Login
           </button>

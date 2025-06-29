@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
@@ -17,21 +18,42 @@ export default function Login() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // สำคัญสำหรับ cookie auth
         body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/home');
+        // แจ้งเตือน SweetAlert เมื่อเข้าสู่ระบบสำเร็จ
+        Swal.fire({
+          icon: 'success',
+          title: 'เข้าสู่ระบบสำเร็จ',
+          text: 'ยินดีต้อนรับกลับ!',
+          timer: 1200,
+          showConfirmButton: false
+        });
+        setTimeout(() => {
+          navigate('/home');
+        }, 1200);
       } else {
-        alert(data.message || 'เข้าสู่ระบบไม่สำเร็จ');
+        Swal.fire({
+          icon: 'error',
+          title: 'เข้าสู่ระบบไม่สำเร็จ',
+          text: data.message || 'เข้าสู่ระบบไม่สำเร็จ',
+        });
       }
     } catch (error) {
       alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ฟังก์ชัน handleKeyDown สำหรับ Enter
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
     }
   };
 
@@ -86,6 +108,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="your@email.com"
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                   required
@@ -109,6 +132,7 @@ export default function Login() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="••••••••••"
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                   required

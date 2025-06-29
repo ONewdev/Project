@@ -35,7 +35,7 @@ function Products() {
       const filtered = products.filter(product => 
         product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category_id?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+        product.category_name?.toString().toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredProducts(filtered);
     }
@@ -257,7 +257,7 @@ function Products() {
     },
     { 
       name: 'หมวดหมู่', 
-      selector: (row) => row.category_id,
+      selector: (row) => row.category_name,
       width: '120px',
       sortable: true
     },

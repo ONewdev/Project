@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Slidebar from '../../components/Slidebar';
+import Serach from '../../components/Serach';
 
 
 
@@ -55,6 +56,7 @@ function Products() {
         <div className="text-center mb-12 mt-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-4 ">สินค้ายอดนิยม</h1>
         </div>
+        <Serach setSelectedCategory={setSelectedCategory} setSortBy={setSortBy} />
         {/* Filters */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
           

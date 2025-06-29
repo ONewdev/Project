@@ -1,6 +1,6 @@
-// ✅ MainLayout.jsx
-import Sidebar from './Sidebar';
-import Navbar from './Navbar';
+
+import SidebarProflie from './SidebarProflie';
+
 import { Outlet } from 'react-router-dom';
 
 export default function MainLayout() {
@@ -8,7 +8,7 @@ export default function MainLayout() {
     <div className="d-flex">
          
       <div className="bg-light" style={{ width: '250px', height: '100vh' }}>
-          <Sidebar />
+          <SidebarProflie />
         </div>
 
       <div className="flex-grow-1 p-4" style={{ paddingLeft: '280px' }}>

@@ -1,12 +1,11 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-export default function PrivateRoute() {
+export default function PrivateRouteUser() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
-    // เช็ค auth จาก cookie โดยเรียก backend endpoint ที่ตรวจสอบ JWT admin
-    fetch(`${import.meta.env.VITE_HOST}/api/admin/me`, {
+    fetch(`${import.meta.env.VITE_HOST}/api/customers/me`, {
       credentials: 'include',
     })
       .then(res => res.ok)
@@ -15,5 +14,5 @@ export default function PrivateRoute() {
   }, []);
 
   if (isAuthenticated === null) return null; // หรือ loading spinner
-  return isAuthenticated ? <Outlet /> : <Navigate to="/admin/login" replace />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }

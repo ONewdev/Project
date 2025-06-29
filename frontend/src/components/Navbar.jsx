@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import { ShoppingCart, Menu, X, ArrowRight, UserCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
  // Assuming you have a CSS file for additional styles
@@ -6,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const host = import.meta.env.VITE_HOST;
   const navigate = useNavigate();
 
   // Load Google Fonts for Thai language support
@@ -22,22 +24,45 @@ export default function Navbar() {
     };
   }, []);
   
+  // Fetch user info from cookie-auth endpoint
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${host}/api/customers/me`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      }
+    };
+    fetchUser();
   }, []);
 
-  // Listen for login/logout and update user state
+  // Re-fetch user after login/logout navigation or route change
   useEffect(() => {
-    const handleStorage = () => {
-      const storedUser = localStorage.getItem('user');
-      setUser(storedUser ? JSON.parse(storedUser) : null);
+    const handleUserChange = () => {
+      fetch(`${host}/api/customers/me`, { credentials: 'include' })
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => setUser(data.user))
+        .catch(() => setUser(null));
     };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
+    window.addEventListener('userChanged', handleUserChange);
+    // Listen to route changes (popstate for browser navigation)
+    window.addEventListener('popstate', handleUserChange);
+    // Also check on hashchange (for SPA navigation)
+    window.addEventListener('hashchange', handleUserChange);
+    return () => {
+      window.removeEventListener('userChanged', handleUserChange);
+      window.removeEventListener('popstate', handleUserChange);
+      window.removeEventListener('hashchange', handleUserChange);
+    };
+  }, [host]);
 
   return (
     <header
@@ -101,11 +126,20 @@ export default function Navbar() {
                       โปรไฟล์ของฉัน
                     </button>
                     <button
-                      onClick={() => {
-                        localStorage.removeItem('user');
+                      onClick={async () => {
+                        await fetch(`${host}/api/customers/logout`, { method: 'POST', credentials: 'include' });
                         setUser(null);
                         setIsMenuOpen(false);
-                        navigate('/login');
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'ออกจากระบบแล้ว',
+                          showConfirmButton: false,
+                          timer: 1200,
+                          confirmButtonColor: '#16a34a'
+                        }).then(() => {
+                          window.dispatchEvent(new Event('userChanged'));
+                          navigate('/home', { replace: true });
+                        });
                       }}
                       className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
                     >
@@ -158,26 +192,35 @@ export default function Navbar() {
       <div className="pt-4 border-t border-gray-200">
         {user ? (
           <>
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/users/profile'); // เปลี่ยนเส้นทางตามจริงที่คุณมี
-              }}
-              className="w-full text-left px-5 py-2 text-green-700 hover:bg-gray-100 rounded-md font-semibold"
-            >
-              โปรไฟล์ของฉัน
-            </button>
-            <button
-              onClick={() => {
-                localStorage.removeItem('user');
-                setUser(null);
-                setIsMenuOpen(false);
-                navigate('/login');
-              }}
-              className="w-full text-left px-5 py-2 text-red-600 hover:bg-gray-100 rounded-md font-semibold"
-            >
-              ออกจากระบบ
-            </button>
+          <button
+            onClick={() => {
+              setIsMenuOpen(false);
+              navigate('/users/profile');
+            }}
+            className="w-full text-left px-5 py-2 text-green-700 hover:bg-gray-100 rounded-md font-semibold"
+          >
+            โปรไฟล์ของฉัน
+          </button>
+          <button
+            onClick={async () => {
+              await fetch(`${host}/api/customers/logout`, { method: 'POST', credentials: 'include' });
+              setUser(null);
+              setIsMenuOpen(false);
+              Swal.fire({
+                icon: 'success',
+                title: 'ออกจากระบบแล้ว',
+                showConfirmButton: false,
+                timer: 1200,
+                confirmButtonColor: '#16a34a'
+              }).then(() => {
+                window.dispatchEvent(new Event('userChanged'));
+                navigate('/home', { replace: true });
+              });
+            }}
+            className="w-full text-left px-5 py-2 text-red-600 hover:bg-gray-100 rounded-md font-semibold"
+          >
+            ออกจากระบบ
+          </button>
           </>
         ) : (
           <button

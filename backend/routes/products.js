@@ -11,7 +11,7 @@ router.post(
 
 // GET, PATCH, DELETE
 router.get('/', productController.getAllProducts);
-router.patch('/:id', productController.updateProduct);
+router.patch('/:id', productController.uploadProductImage, productController.updateProduct);
 router.delete('/:id', productController.deleteProduct);
 router.patch('/:id/status', productController.updateProductStatus);
 
