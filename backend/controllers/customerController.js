@@ -41,7 +41,7 @@ exports.changeCustomerStatus = async (req, res) => {
 };
 
 const jwt = require('jsonwebtoken');
-const { setAuthCookie } = require('../utils/authCookie');
+// const { setAuthCookie } = require('../utils/authCookie');
 const JWT_SECRET = process.env.JWT_SECRET || 'alshop_secret_key';
 const JWT_EXPIRES = '7d';
 
@@ -62,8 +62,7 @@ exports.login = async (req, res) => {
 
     // สร้าง JWT token
     const token = jwt.sign({ user_id: user.id, email: user.email, name: user.name }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-    setAuthCookie(res, token);
-
+    // ไม่ set cookie อีกต่อไป ส่ง token กลับไปให้ frontend เก็บใน localStorage
     res.status(200).json({
       message: 'เข้าสู่ระบบสำเร็จ',
       user: {
@@ -72,6 +71,7 @@ exports.login = async (req, res) => {
         email: user.email,
         status: user.status,
       },
+      token
     });
   } catch (error) {
     console.error('Login error:', error.message);
@@ -112,5 +112,45 @@ exports.registerCustomer = async (req, res) => {
   } catch (error) {
     console.error('Error in registerCustomer:', error); // ✅ ตรงนี้ดูใน Terminal
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการสมัครสมาชิก' });
+  }
+};
+
+// ดึงโปรไฟล์ลูกค้า (ตาม id)
+exports.getCustomerById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await db('customers')
+      .select('id', 'email', 'name', 'status', 'profile_picture', 'created_at', 'updated_at')
+      .where({ id })
+      .first();
+
+    if (!user) {
+      return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching customer:', error.message);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' });
+  }
+};
+
+// แก้ไขโปรไฟล์ลูกค้า
+exports.updateCustomerProfile = async (req, res) => {
+  const { id } = req.params;
+  const { name, email, profile_picture } = req.body;
+
+  try {
+    const updated_at = new Date();
+
+    await db('customers')
+      .where({ id })
+      .update({ name, email, profile_picture, updated_at });
+
+    res.status(200).json({ message: 'อัปเดตโปรไฟล์สำเร็จ' });
+  } catch (error) {
+    console.error('Error updating profile:', error.message);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์' });
   }
 };

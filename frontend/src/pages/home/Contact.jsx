@@ -7,6 +7,18 @@ import Slidebar from '../../components/Slidebar';
 import Footer from '../../components/Footer';
 
 function Contact() {
+  // โหลด Google Fonts (Kanit + Prompt)
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    return () => {
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
+    };
+  }, []);
   const host = import.meta.env.VITE_HOST;
   const [formData, setFormData] = useState({
     name: '',
@@ -67,18 +79,12 @@ function Contact() {
 
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Prompt', 'Kanit', sans-serif" }}>
       <Navbar />
-      <Slidebar />
-      
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">ติดต่อเรา</h1>
-          <p className="text-xl text-green-100">เราพร้อมให้บริการและตอบคำถามของคุณ</p>
-        </div>
+       <div className="w-full bg-gray/80 py-6 shadow text-left pl-10">
+        <h1 className="text-3xl md:text-4xl font-bold text-green-700 tracking-wide" style={{ fontFamily: "'Kanit', 'Prompt', sans-serif" }}>ติดต่อเรา</h1>
       </div>
-
+      <Slidebar />
       {/* Contact Content */}
       <div className="py-16">
         <div className="max-w-7xl mx-auto px-6">

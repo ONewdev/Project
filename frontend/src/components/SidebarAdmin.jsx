@@ -47,7 +47,7 @@ export default function Sidebar() {
       cancelButtonText: 'ยกเลิก'
     }).then((result) => {
       if (result.isConfirmed) {
-        localStorage.removeItem('token');
+        localStorage.removeItem('admin_token');
         Swal.fire({
           icon: 'success',
           title: 'ออกจากระบบแล้ว',
@@ -72,7 +72,9 @@ export default function Sidebar() {
         position: 'fixed',
         background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
         color: '#fff',
-        fontFamily: "'Kanit', sans-serif"
+        fontFamily: "'Kanit', sans-serif",
+        overflowY: 'auto',
+        height: '100vh',
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">

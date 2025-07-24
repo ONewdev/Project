@@ -16,14 +16,10 @@ router.delete('/:id', customerController.deleteCustomer);
 router.patch('/:id/status', customerController.changeCustomerStatus);
 //ลงทะเบียน
 router.post('/login', customerController.login);
-
-// Logout (clear cookie)
-// Logout (clear cookie)
-const { clearAuthCookie } = require('../utils/authCookie');
-router.post('/logout', (req, res) => {
-  clearAuthCookie(res);
-  res.json({ message: 'ออกจากระบบสำเร็จ' });
-});
+// ดึงข้อมูลลูกค้า 1 คน
+router.get('/:id', customerController.getCustomerById);
+// อัปเดตโปรไฟล์
+router.put('/:id', customerController.updateCustomerProfile);
 //สมัครสมาชิก
 router.post('/register', customerController.registerCustomer); 
 

@@ -24,43 +24,20 @@ export default function Navbar() {
     };
   }, []);
   
-  // Fetch user info from cookie-auth endpoint
+  // อ่าน user จาก localStorage ทุกครั้งที่ mount หรือ userChanged
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`${host}/api/customers/me`, {
-          credentials: 'include',
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch {
-        setUser(null);
-      }
+    const getUser = () => {
+      const u = localStorage.getItem('user');
+      setUser(u ? JSON.parse(u) : null);
     };
-    fetchUser();
-  }, []);
-
-  // Re-fetch user after login/logout navigation or route change
-  useEffect(() => {
-    const handleUserChange = () => {
-      fetch(`${host}/api/customers/me`, { credentials: 'include' })
-        .then(res => res.ok ? res.json() : Promise.reject())
-        .then(data => setUser(data.user))
-        .catch(() => setUser(null));
-    };
-    window.addEventListener('userChanged', handleUserChange);
-    // Listen to route changes (popstate for browser navigation)
-    window.addEventListener('popstate', handleUserChange);
-    // Also check on hashchange (for SPA navigation)
-    window.addEventListener('hashchange', handleUserChange);
+    getUser();
+    window.addEventListener('userChanged', getUser);
+    window.addEventListener('popstate', getUser);
+    window.addEventListener('hashchange', getUser);
     return () => {
-      window.removeEventListener('userChanged', handleUserChange);
-      window.removeEventListener('popstate', handleUserChange);
-      window.removeEventListener('hashchange', handleUserChange);
+      window.removeEventListener('userChanged', getUser);
+      window.removeEventListener('popstate', getUser);
+      window.removeEventListener('hashchange', getUser);
     };
   }, [host]);
 
@@ -126,8 +103,9 @@ export default function Navbar() {
                       โปรไฟล์ของฉัน
                     </button>
                     <button
-                      onClick={async () => {
-                        await fetch(`${host}/api/customers/logout`, { method: 'POST', credentials: 'include' });
+                      onClick={() => {
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('token');
                         setUser(null);
                         setIsMenuOpen(false);
                         Swal.fire({
@@ -202,8 +180,9 @@ export default function Navbar() {
             โปรไฟล์ของฉัน
           </button>
           <button
-            onClick={async () => {
-              await fetch(`${host}/api/customers/logout`, { method: 'POST', credentials: 'include' });
+            onClick={() => {
+              localStorage.removeItem('user');
+              localStorage.removeItem('token');
               setUser(null);
               setIsMenuOpen(false);
               Swal.fire({

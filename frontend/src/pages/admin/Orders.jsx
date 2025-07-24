@@ -11,12 +11,22 @@ function Orders() {
   const [form, setForm] = useState({ customer: '', total: '', status: '' });
   const host = import.meta.env.VITE_HOST;
 
-  useEffect(() => {
-    fetch(`${host}/api/orders`)
-      .then(res => res.json())
-      .then(data => setOrders(data))
-      .catch(() => setOrders([]));
-  }, [host]);
+ useEffect(() => {
+  fetch(`${host}/api/orders`)
+    .then(res => res.json())
+    .then(data => {
+      console.log('🟢 orders data:', data); // ✅ log response
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        console.error('❌ orders is not array:', data); // ✅ ตรวจจับข้อมูลผิดรูปแบบ
+        setOrders([]);
+      }
+    })
+    .catch(err => {
+      console.error('❌ fetch error:', err); // ✅ จับ error เครือข่าย
+    });
+}, [host]);
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -111,8 +121,8 @@ function Orders() {
             ) : (
               orders.map(order => (
                 <tr key={order.id} className="border-b">
-                  <td className="py-2 px-4">{order.customer}</td>
-                  <td className="py-2 px-4">{order.total}</td>
+                  <td className="py-2 px-4">{order.customer_id}</td>
+                  <td className="py-2 px-4">{order.total_price}</td>
                   <td className="py-2 px-4">{order.status}</td>
                   <td className="py-2 px-4 flex gap-2">
                     <button

@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
 
 const authRoutes = require('./routes/auth');
 const customersRouter = require('./routes/customers');
@@ -10,6 +10,10 @@ const productsRouter = require('./routes/products');
 const contactRouter = require('./routes/contact');
 const adminRouter = require('./routes/admin'); 
 const categoryRouter = require('./routes/categories'); 
+const ordersRouter = require('./routes/orders'); 
+const stockRouter = require('./routes/stocks'); 
+const interactionRoutes = require('./routes/interactions'); // Import interaction routes
+
 
 const app = express();
 app.use(cors({
@@ -18,7 +22,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(bodyParser.json());
 
 // Serve static files (ภาพ) จาก public/uploads
@@ -33,8 +37,12 @@ app.use('/api', authRoutes);
 app.use('/api/customers', customersRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/contact', contactRouter);
-app.use('/api/admin', adminRouter); // <-- เพิ่มให้ตรง path
+app.use('/api/admin', adminRouter); 
 app.use('/api/categories', categoryRouter); 
+app.use('/api/orders', ordersRouter); 
+app.use('/api/stocks', stockRouter);
+app.use('/api/interactions', interactionRoutes); // Use interaction routes
+
 
 app.listen(3001, () => {
   console.log('Backend running on http://localhost:3001');

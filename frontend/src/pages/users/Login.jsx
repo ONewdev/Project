@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -11,31 +13,33 @@ export default function Login() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-
     try {
       const res = await fetch(`${host}/api/customers/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include', // สำคัญสำหรับ cookie auth
+        // credentials: 'include', // ไม่ใช้ cookie อีกต่อไป
         body: JSON.stringify({ email, password })
       });
-
       const data = await res.json();
-
       if (res.ok) {
-        // แจ้งเตือน SweetAlert เมื่อเข้าสู่ระบบสำเร็จ
+        // เก็บ user และ token ลง localStorage
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
         Swal.fire({
           icon: 'success',
           title: 'เข้าสู่ระบบสำเร็จ',
           text: 'ยินดีต้อนรับกลับ!',
           timer: 1200,
           showConfirmButton: false
-        });
-        setTimeout(() => {
+        }).then(() => {
+          window.dispatchEvent(new Event('userChanged'));
           navigate('/home');
-        }, 1200);
+        });
       } else {
         Swal.fire({
           icon: 'error',

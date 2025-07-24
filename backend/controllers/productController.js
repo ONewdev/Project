@@ -27,14 +27,16 @@ const uploadProductImage = upload.single('image'); // ใช้กับ field n
 // 1. Get all products
 const getAllProducts = async (req, res) => {
   try {
-    const rows = await db('products')
+    const { category_id } = req.query; // ✅ ดึง category_id จาก query string
+
+    let query = db('products')
       .leftJoin('category', 'products.category_id', 'category.category_id')
       .select(
         'products.id',
         'products.name',
         'products.description',
         'products.category_id',
-        'category.category_name',
+        'category.category_name as category_name',
         'products.price',
         'products.quantity',
         'products.image_url',
@@ -42,39 +44,82 @@ const getAllProducts = async (req, res) => {
         'products.created_at',
         'products.updated_at'
       );
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching products:', error.message);
+
+    // ✅ เพิ่มเงื่อนไข filter หมวดหมู่ ถ้ามี
+    if (category_id) {
+      query = query.where('products.category_id', category_id);
+    }
+
+    const products = await query;
+
+    res.json(products);
+  } catch (err) {
+    console.error('Error fetching products:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
+
+
 // 2. Add new product (พร้อมรูป)
 const addProduct = async (req, res) => {
-  const { name, description, category_id, price, quantity, status } = req.body;
-  const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : null;
-  console.log(req.file); 
-
   try {
-    const [id] = await db('products').insert({
+    const { product_code, name, description, category_id, price, quantity, status } = req.body;
+    const imageUrl = req.file ? `/uploads/products/${req.file.filename}` : null;
+
+    const newProduct = {
+      product_code,
       name,
       description,
-      category_id,
+      category_id: category_id || null, // Ensure empty string becomes null if needed
       price,
       quantity,
       status,
       image_url: imageUrl,
-      created_at: db.fn.now(),
-      updated_at: db.fn.now()
-    });
+    };
 
-    const newProduct = await db('products').where({ id }).first();
-    res.status(201).json(newProduct);
-  } catch (error) {
-    console.error('Error adding product:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
+    // For MySQL/SQLite, this returns an array with the new ID, e.g., [123]
+    const [insertedProductId] = await db('products').insert(newProduct);
+
+    // Check if the insert was successful and we got an ID
+    if (!insertedProductId) {
+        throw new Error("Failed to insert product, no ID returned.");
+    }
+
+    // Now, use the ID directly to fetch the full product details
+    const newlyAddedProduct = await db('products')
+        .leftJoin('category', 'products.category_id', 'category.category_id')
+        .select(
+            'products.id',
+            'products.product_code',
+            'products.name',
+            'products.description',
+            'products.category_id',
+            'category.category_name as category_name',
+            'products.price',
+            'products.quantity',
+            'products.image_url',
+            'products.status'
+        )
+        // Correctly use the ID variable here
+        .where('products.id', insertedProductId)
+        .first();
+
+    if (!newlyAddedProduct) {
+        return res.status(404).json({ message: 'Could not find newly created product.'});
+    }
+
+    res.status(201).json(newlyAddedProduct);
+
+  } catch (err) {
+    // This will now log the detailed database error to your server console
+    console.error("Error in addProduct:", err);
+    res.status(500).json({ message: 'เพิ่มสินค้าไม่สำเร็จ', error: err.message });
   }
 };
+
+
+
 
 // 3. Update product
 const updateProduct = async (req, res) => {
@@ -117,13 +162,18 @@ const deleteProduct = async (req, res) => {
 
   try {
     // ดึง path รูปภาพก่อนลบ
-    const product = await db('products').where({ id }).first();
-    if (product && product.image_url) {
-      const imagePath = path.join(__dirname, '..', 'public', product.image_url);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
+   const product = await db('products').where({ id }).first();
+if (product && product.image_url) {
+  const imagePath = path.join(__dirname, '..', 'public', product.image_url.replace(/^\/+/, ''));
+  console.log("Image path:", imagePath); // เช็ก path
+
+  if (fs.existsSync(imagePath)) {
+    fs.unlinkSync(imagePath);
+    console.log("Deleted image");
+  } else {
+    console.log("Image not found");
+  }
+}
     await db('products').where({ id }).del();
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
@@ -148,6 +198,39 @@ const updateProductStatus = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+// 6. Get product by ID
+const getProductById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const product = await db('products')
+      .leftJoin('category', 'products.category_id', 'category.category_id')
+      .select(
+        'products.id',
+        'products.name',
+        'products.description',
+        'products.category_id',
+        'category.category_name',
+        'products.price',
+        'products.quantity',
+        'products.image_url',
+        'products.status',
+        'products.created_at',
+        'products.updated_at'
+      )
+      .where('products.id', id)
+      .first();
+
+    if (!product) {
+      return res.status(404).json({ message: 'ไม่พบสินค้านี้' });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error('Error fetching product by ID:', error.message);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 module.exports = {
   uploadProductImage,
@@ -155,5 +238,6 @@ module.exports = {
   addProduct,
   updateProduct,
   deleteProduct,
-  updateProductStatus
+  updateProductStatus,
+  getProductById
 };

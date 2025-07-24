@@ -3,7 +3,11 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'alshop_secret_key';
 
 function authenticateCustomer(req, res, next) {
-  const token = req.cookies?.alshop_token || req.headers['authorization']?.split(' ')[1];
+  // ตรวจสอบ token จาก Authorization header (Bearer ...)
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ')
+    ? authHeader.split(' ')[1]
+    : null;
   if (!token) {
     return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
   }

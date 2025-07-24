@@ -15,7 +15,6 @@
     "bootstrap": "^5.3.6",
     "lucide-react": "^0.514.0",
     "react": "^19.1.0",
-    "react-bootstrap": "^2.10.9",
     "react-data-table-component": "^7.7.0",
     "react-dom": "^19.1.0",
     "react-icon": "^1.0.0",

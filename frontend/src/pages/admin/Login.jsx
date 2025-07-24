@@ -18,26 +18,32 @@ export default function Login() {
       const res = await fetch(`${host}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // สำคัญมากสำหรับ cookie auth
+        // credentials: 'include', // ไม่ใช้ cookie อีกต่อไป
         body: JSON.stringify(form)
       });
       const data = await res.json();
-      console.log('LOGIN DEBUG', res.status, data); // <--- เพิ่ม debug
+      console.log('LOGIN DEBUG', res.status, data);
       setVariant(res.ok ? 'success' : 'danger');
       setMessage(data.message);
 
       if (res.ok) {
-  Swal.fire({
-    icon: 'success',
-    title: 'เข้าสู่ระบบสำเร็จ',
-    showConfirmButton: false,
-    timer: 1000
-  });
-  setTimeout(() => {
-    console.log('Navigating to /admin/dashboard');
-    navigate('/admin/dashboard');
-  }, 1100);
-}
+          // เก็บ token และ user ลง localStorage
+        if (data.token) {
+          localStorage.setItem('admin_token', data.token);
+        }
+        if (data.user) {
+          localStorage.setItem('admin_user', JSON.stringify(data.user));
+        }
+        Swal.fire({
+          icon: 'success',
+          title: 'เข้าสู่ระบบสำเร็จ',
+          showConfirmButton: false,
+          timer: 1000
+        }).then(() => {
+          window.dispatchEvent(new Event('userChanged'));
+          navigate('/admin/dashboard');
+        });
+      }
     } catch (err) {
       setVariant('danger');
       setMessage('Error connecting to server');

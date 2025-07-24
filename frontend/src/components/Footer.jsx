@@ -4,6 +4,7 @@ import { Star, Shield, Truck, Phone, Mail, MapPin, Facebook, Instagram, MessageC
 
 
 function Footer() {
+  
   return (
     <footer className="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-700 text-gray-200 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,7 +26,7 @@ function Footer() {
               <li><a href="#" className="hover:text-white">หน้าแรก</a></li>
               <li><a href="#" className="hover:text-white">สินค้า</a></li>
               <li><a href="#" className="hover:text-white">บริการ</a></li>
-              <li><a href="#" className="hover:text-white">ผลงาน</a></li>
+            
             </ul>
           </div>
           <div>

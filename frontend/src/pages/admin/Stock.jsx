@@ -8,7 +8,7 @@ function Stock() {
   const [stocks, setStocks] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editStock, setEditStock] = useState(null);
-  const [form, setForm] = useState({ name: '', quantity: '' });
+  const [form, setForm] = useState({ material_name: '', quantity: '', unit: '' });
   const host = import.meta.env.VITE_HOST;
 
   useEffect(() => {
@@ -19,6 +19,7 @@ function Stock() {
   }, [host]);
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+
 
   const handleAdd = () => {
     setEditStock(null);
@@ -54,26 +55,29 @@ function Stock() {
   };
 
   const handleSubmit = e => {
-    e.preventDefault();
+    const bodyData = {
+      material_name: form.material_name,
+      quantity: parseFloat(form.quantity),
+      unit: form.unit,
+    };
+
     if (editStock) {
-      // update
       fetch(`${host}/api/stocks/${editStock.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(bodyData),
       })
         .then(res => res.json())
         .then(data => {
-          setStocks(prev => prev.map(a => (a.id === editStock.id ? { ...a, ...form } : a)));
+          setStocks(prev => prev.map(s => s.id === editStock.id ? data : s));
           setShowModal(false);
           Swal.fire('สำเร็จ', 'อัปเดตข้อมูลสต็อกแล้ว', 'success');
         });
     } else {
-      // create
       fetch(`${host}/api/stocks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(bodyData),
       })
         .then(res => res.json())
         .then(data => {
@@ -82,6 +86,7 @@ function Stock() {
           Swal.fire('สำเร็จ', 'เพิ่มสต็อกแล้ว', 'success');
         });
     }
+
   };
 
   return (
@@ -110,7 +115,7 @@ function Stock() {
             ) : (
               stocks.map(stock => (
                 <tr key={stock.id} className="border-b">
-                  <td className="py-2 px-4">{stock.name}</td>
+                  <td className="py-2 px-4">{stock.material_name}</td>
                   <td className="py-2 px-4">{stock.quantity}</td>
                   <td className="py-2 px-4 flex gap-2">
                     <button

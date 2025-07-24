@@ -9,7 +9,7 @@ function Admin() {
   const host = import.meta.env.VITE_HOST;
 
   useEffect(() => {
-    fetch(`${host}/api/admins`)
+    fetch(`${host}/api/admin`)
       .then(res => res.json())
       .then(data => setAdmins(data))
       .catch(() => setAdmins([]));
@@ -40,7 +40,7 @@ function Admin() {
       confirmButtonColor: '#16a34a',
     }).then(result => {
       if (result.isConfirmed) {
-        fetch(`${host}/api/admins/${id}`, { method: 'DELETE' })
+        fetch(`${host}/api/admin/${id}`, { method: 'DELETE' })
           .then(res => res.json())
           .then(() => {
             setAdmins(prev => prev.filter(a => a.id !== id));
