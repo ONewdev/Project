@@ -78,6 +78,18 @@ export default function Navbar() {
             ))}
           </nav>
           <div className="flex items-center space-x-4">
+            {/* Shopping Cart Icon: แสดงเฉพาะเมื่อ login */}
+            {user && (
+              <button
+                className="p-2 rounded-full hover:bg-gray-100 transition relative"
+                title="ตะกร้าสินค้า"
+                onClick={() => navigate('/users/orders')}
+                aria-label="ตะกร้าสินค้า"
+              >
+                <ShoppingCart className="w-7 h-7 text-green-700" />
+                {/* สามารถเพิ่ม badge จำนวนสินค้าได้ที่นี่ */}
+              </button>
+            )}
             {user ? (
               <div className="relative">
                 {/* ไอคอนโปรไฟล์ */}
@@ -151,6 +163,20 @@ export default function Navbar() {
        {isMenuOpen && (
   <div className="md:hidden border-t border-gray-200 py-4 bg-white rounded-b-2xl shadow-md">
     <div className="flex flex-col space-y-3">
+      {/* Shopping Cart Icon (Mobile): แสดงเฉพาะเมื่อ login */}
+      {user && (
+        <button
+          className="p-2 rounded-full hover:bg-gray-100 transition self-start"
+          title="ตะกร้าสินค้า"
+          onClick={() => {
+            setIsMenuOpen(false);
+            navigate('/users/orders');
+          }}
+          aria-label="ตะกร้าสินค้า"
+        >
+          <ShoppingCart className="w-7 h-7 text-green-700" />
+        </button>
+      )}
       {[
         { to: "/home", label: "หน้าแรก" },
         { to: "/products", label: "สินค้า" },

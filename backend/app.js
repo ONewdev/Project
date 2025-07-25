@@ -12,7 +12,8 @@ const adminRouter = require('./routes/admin');
 const categoryRouter = require('./routes/categories'); 
 const ordersRouter = require('./routes/orders'); 
 const stockRouter = require('./routes/stocks'); 
-const interactionRoutes = require('./routes/interactions'); // Import interaction routes
+const interactionRoutes = require('./routes/interactions'); 
+const messageRoutes = require('./routes/messages');
 
 
 const app = express();
@@ -41,7 +42,8 @@ app.use('/api/admin', adminRouter);
 app.use('/api/categories', categoryRouter); 
 app.use('/api/orders', ordersRouter); 
 app.use('/api/stocks', stockRouter);
-app.use('/api/interactions', interactionRoutes); // Use interaction routes
+app.use('/api/interactions', interactionRoutes); 
+app.use('/api/messages', messageRoutes);
 
 
 app.listen(3001, () => {
