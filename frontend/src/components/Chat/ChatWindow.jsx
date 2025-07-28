@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { fetchMessages, sendMessage } from '../services/chatService';
+import { fetchMessages, sendMessage } from '../../services/chatService';
 
 export default function ChatWindow({ senderId, receiverId }) {
   const [messages, setMessages] = useState([]);
@@ -8,7 +8,7 @@ export default function ChatWindow({ senderId, receiverId }) {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    if (!senderId || !receiverId) return;
+    if (senderId === undefined || senderId === null || receiverId === undefined || receiverId === null) return;
     setLoading(true);
     fetchMessages(senderId, receiverId)
       .then(data => {
@@ -39,7 +39,7 @@ export default function ChatWindow({ senderId, receiverId }) {
     }
   };
 
-  if (!senderId || !receiverId) return <div>กรุณาเลือกการสนทนา</div>;
+  if (senderId === undefined || senderId === null || receiverId === undefined || receiverId === null) return <div>กรุณาเลือกการสนทนา</div>;
   if (loading) return <div>กำลังโหลดข้อความ...</div>;
 
   return (

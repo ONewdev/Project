@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { sendMessage } from '../../services/chatService';
 
 // Mock components - replace with your actual components
 import Navbar from '../../components/Navbar';
@@ -28,6 +29,7 @@ function Contact() {
     message: ''
   });
   const [contactInfo, setContactInfo] = useState(null);
+  
 
   useEffect(() => {
     fetch(`${host}/api/contact`)
@@ -51,26 +53,20 @@ function Contact() {
     e.preventDefault();
 
     try {
-      const response = await fetch(`${host}/api/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+      const user = localStorage.getItem('user');
+      const sender_id = user ? JSON.parse(user).id : 0; // 0 หรือ null สำหรับ guest
+      const receiver_id = 1; // สมมุติ admin id = 1
+      // รวมข้อมูลลูกค้าในข้อความ
+      const message = `ติดต่อจากฟอร์ม\nชื่อ: ${formData.name}\nอีเมล: ${formData.email}\nเบอร์โทร: ${formData.phone}\nหัวข้อ: ${formData.subject}\nข้อความ: ${formData.message}`;
+      await sendMessage({ sender_id, receiver_id, message });
+      alert('ขอบคุณสำหรับข้อความของคุณ! เราจะติดต่อกลับในเร็วๆ นี้');
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
       });
-
-      if (response.ok) {
-        alert('ขอบคุณสำหรับข้อความของคุณ! เราจะติดต่อกลับในเร็วๆ นี้');
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          subject: '',
-          message: ''
-        });
-      } else {
-        alert('เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่');
-      }
     } catch (error) {
       console.error('Error:', error);
       alert('มีบางอย่างผิดพลาด กรุณาลองใหม่ภายหลัง');

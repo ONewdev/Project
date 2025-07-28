@@ -1,92 +1,130 @@
 const db = require('../db');
 
+// สร้างคำสั่งซื้อใหม่
+exports.createOrder = async (req, res) => {
+  try {
+    const { customer_id, items, order_type, customDetails, shipping_address, phone } = req.body;
+
+    console.log('Received order data:', { customer_id, items, shipping_address, phone });
+
+    if (!customer_id || !items || items.length === 0) {
+      return res.status(400).json({ message: 'Missing required data' });
+    }
+
+    // สร้างคำสั่งซื้อสำหรับแต่ละสินค้า
+    const createdOrders = [];
+
+    for (const item of items) {
+      const product = await db('products').where({ id: item.product_id }).first();
+      if (!product) {
+        return res.status(404).json({ message: `Product ${item.product_id} not found` });
+      }
+      
+      const total_price = parseFloat(product.price) * item.quantity;
+
+      console.log('Creating order for product:', product.name, 'quantity:', item.quantity, 'total:', total_price);
+
+      // สร้างคำสั่งซื้อสำหรับสินค้านี้
+      const [orderId] = await db('orders').insert({
+        customer_id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        total_price,
+        order_type: order_type || 'standard',
+        status: 'pending'
+      });
+
+      createdOrders.push({
+        orderId,
+        product_name: product.name,
+        quantity: item.quantity,
+        total_price
+      });
+    }
+
+    console.log('Created orders:', createdOrders);
+
+    res.status(201).json({ 
+      message: 'Orders created successfully', 
+      orders: createdOrders
+    });
+  } catch (err) {
+    console.error('Error creating order:', err);
+    res.status(500).json({ message: 'Error creating order', error: err.message });
+  }
+};
+
 // ดึงคำสั่งซื้อทั้งหมด
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await db('orders').select('*');
-    console.log('✅ Orders:', orders); // ✅ เพิ่ม log ตรงนี้
-    res.status(200).json(orders);
-  } catch (error) {
-    console.error('❌ Error fetching orders:', error); // ✅ เพิ่ม log error เต็ม
-    res.status(500).json({ message: 'Internal server error' });
+    const orders = await db('orders')
+      .leftJoin('customers', 'orders.customer_id', 'customers.id')
+      .leftJoin('products', 'orders.product_id', 'products.id')
+      .select(
+        'orders.*',
+        'customers.name as customer_name',
+        'customers.email as customer_email',
+        'products.name as product_name',
+        'products.image_url'
+      )
+      .orderBy('orders.created_at', 'desc');
+
+    res.json(orders);
+  } catch (err) {
+    console.error('Error fetching orders:', err);
+    res.status(500).json({ message: 'Error fetching orders' });
   }
 };
 
-// เพิ่มคำสั่งซื้อ
-exports.createOrder = async (req, res) => {
-  const { customer, total, status } = req.body;
-
-  if (!customer || !total || !status) {
-    return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
-  }
-
+// ดึงคำสั่งซื้อตาม customer_id
+exports.getOrdersByCustomer = async (req, res) => {
   try {
-    const now = new Date();
-    const [id] = await db('orders').insert({
-      customer,
-      total,
-      status,
-      created_at: now,
-      updated_at: now
-    });
+    const { customer_id } = req.params;
+    
+    const orders = await db('orders')
+      .leftJoin('products', 'orders.product_id', 'products.id')
+      .select(
+        'orders.*',
+        'products.name as product_name',
+        'products.image_url'
+      )
+      .where({ customer_id })
+      .orderBy('created_at', 'desc');
 
-    const newOrder = { id, customer, total, status, created_at: now, updated_at: now };
-    res.status(201).json(newOrder);
-  } catch (error) {
-    console.error('Error creating order:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
+    res.json(orders);
+  } catch (err) {
+    console.error('Error fetching customer orders:', err);
+    res.status(500).json({ message: 'Error fetching orders' });
   }
 };
 
-// แก้ไขคำสั่งซื้อ
-exports.updateOrder = async (req, res) => {
-  const { id } = req.params;
-  const { customer, total, status } = req.body;
-
+// อัปเดตสถานะคำสั่งซื้อ
+exports.updateOrderStatus = async (req, res) => {
   try {
-    const updated_at = new Date();
+    const { id } = req.params;
+    const { status } = req.body;
 
     await db('orders')
       .where({ id })
-      .update({ customer, total, status, updated_at });
+      .update({ status });
 
-    res.status(200).json({ message: 'อัปเดตคำสั่งซื้อเรียบร้อยแล้ว' });
-  } catch (error) {
-    console.error('Error updating order:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
+    res.json({ message: 'Order status updated' });
+  } catch (err) {
+    console.error('Error updating order status:', err);
+    res.status(500).json({ message: 'Error updating order status' });
   }
 };
 
 // ลบคำสั่งซื้อ
 exports.deleteOrder = async (req, res) => {
-  const { id } = req.params;
-
   try {
+    const { id } = req.params;
+
     await db('orders').where({ id }).del();
-    res.status(200).json({ message: 'ลบคำสั่งซื้อเรียบร้อยแล้ว' });
-  } catch (error) {
-    console.error('Error deleting order:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
 
-// ดึงคำสั่งซื้อรายการเดียว (optional)
-exports.getOrderById = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const order = await db('orders')
-      .select('id', 'customer', 'total', 'status', 'created_at', 'updated_at')
-      .where({ id })
-      .first();
-
-    if (!order) {
-      return res.status(404).json({ message: 'ไม่พบคำสั่งซื้อนี้' });
-    }
-
-    res.status(200).json(order);
-  } catch (error) {
-    console.error('Error fetching order:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
+    res.json({ message: 'Order deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting order:', err);
+    res.status(500).json({ message: 'Error deleting order' });
   }
 };

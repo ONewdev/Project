@@ -14,6 +14,8 @@ const ordersRouter = require('./routes/orders');
 const stockRouter = require('./routes/stocks'); 
 const interactionRoutes = require('./routes/interactions'); 
 const messageRoutes = require('./routes/messages');
+const statsRoutes = require('./routes/stats');
+const paymentRoutes = require('./routes/payment');
 
 
 const app = express();
@@ -44,7 +46,8 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/stocks', stockRouter);
 app.use('/api/interactions', interactionRoutes); 
 app.use('/api/messages', messageRoutes);
-
+app.use('/api/stats', statsRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.listen(3001, () => {
   console.log('Backend running on http://localhost:3001');

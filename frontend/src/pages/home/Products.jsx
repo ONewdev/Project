@@ -233,6 +233,28 @@ function Products() {
       behavior: "smooth",
     });
   };
+  const handleAddToCart = (product) => {
+    if (!user) return alert("กรุณาเข้าสู่ระบบ");
+    const cartKey = `cart_${user.id}`;
+    const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+    const found = cart.find(item => item.id === product.id);
+    if (found) {
+      found.quantity += 1;
+    } else {
+      cart.push({ ...product, quantity: 1 });
+    }
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    alert('เพิ่มสินค้าลงตะกร้าแล้ว!');
+  };
+
+  const handleBuyNow = (product) => {
+    if (!user) return alert("กรุณาเข้าสู่ระบบ");
+    const cartKey = `cart_${user.id}`;
+    // ล้างตะกร้าและเพิ่มสินค้านี้เท่านั้น
+    const cart = [{ ...product, quantity: 1 }];
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    navigate('/users/checkout');
+  };
 
   return (
     <div
@@ -376,9 +398,20 @@ function Products() {
                           )}
                         </div>
                       </div>
-                      <button className="w-full py-3 px-4 rounded-lg font-semibold transition duration-300 bg-green-600 text-white hover:bg-green-700 active:transform active:scale-95 mb-2">
-                        เพิ่มลงตะกร้า
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 bg-green-600 text-white hover:bg-green-700 active:transform active:scale-95"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          เพิ่มลงตะกร้า
+                        </button>
+                        <button
+                          className="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 bg-blue-600 text-white hover:bg-blue-700 active:transform active:scale-95"
+                          onClick={() => handleBuyNow(product)}
+                        >
+                          สั่งซื้อเลย
+                        </button>
+                      </div>
                       <div className="flex gap-2 justify-between mb-2">
                         <button
                           onClick={() => handleLike(product.id)}

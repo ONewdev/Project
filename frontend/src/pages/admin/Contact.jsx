@@ -14,6 +14,7 @@ export default function ContactAdmin() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
 
   // โหลดข้อมูลติดต่อเมื่อ component โหลด
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function ContactAdmin() {
       style={{
         fontFamily: "'Kanit', sans-serif",
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #facc15 0%, #f59e0b 100%)',
+        background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', // เขียว
         color: '#333'
       }}
       className="d-flex align-items-center justify-content-center p-4"
@@ -74,7 +75,7 @@ export default function ContactAdmin() {
         className="bg-white rounded-4 shadow-lg p-5"
         style={{ maxWidth: 600, width: '100%' }}
       >
-        <h2 className="mb-4 fw-bold text-center" style={{ color: '#f59e0b', letterSpacing: 1 }}>
+        <h2 className="mb-4 fw-bold text-center" style={{ color: '#16a34a', letterSpacing: 1 }}>
           แก้ไขข้อมูลการติดต่อ
         </h2>
 
@@ -142,7 +143,7 @@ export default function ContactAdmin() {
           type="submit"
           disabled={isSubmitting}
           className="btn w-100 fw-bold"
-          style={{ background: '#f59e0b', color: '#fff', fontSize: 18 }}
+          style={{ background: '#16a34a', color: '#fff', fontSize: 18 }}
         >
           {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
         </button>
