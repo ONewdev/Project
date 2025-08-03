@@ -87,8 +87,7 @@ function Checkout() {
           quantity: item.quantity
         })),
         shipping_address: formData.shipping_address,
-        phone: formData.phone,
-        note: formData.note
+        phone: formData.phone
       };
 
       const response = await fetch(`${host}/api/orders/create`, {

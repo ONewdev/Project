@@ -9,6 +9,8 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const host = import.meta.env.VITE_HOST;
   const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(0);
+
 
   // Load Google Fonts for Thai language support
   useEffect(() => {
@@ -41,6 +43,29 @@ export default function Navbar() {
     };
   }, [host]);
 
+useEffect(() => {
+  const updateCart = () => {
+    let cartKey;
+    if (user) {
+      cartKey = `cart_${user.id}`;
+    } else {
+      cartKey = 'cart_guest';
+    }
+    const cartItems = JSON.parse(localStorage.getItem(cartKey)) || [];
+    const totalItems = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    setCartCount(totalItems);
+  };
+
+  updateCart();
+  window.addEventListener('cartUpdated', updateCart);
+  window.addEventListener('storage', updateCart);
+
+  return () => {
+    window.removeEventListener('cartUpdated', updateCart);
+    window.removeEventListener('storage', updateCart);
+  };
+}, [user]);
+
   return (
     <header
       className="bg-white/80 backdrop-blur-md shadow-xl sticky top-0 z-50  border border-gray-200"
@@ -67,6 +92,10 @@ export default function Navbar() {
               { to: "/home", label: "หน้าแรก" },
               { to: "/products", label: "สินค้า" },
               { to: "/contact", label: "ติดต่อเรา" },
+              ...(user ? [
+                { to: "/users/favorite", label: "รายการโปรด" },
+                { to: "/users/orders", label: "คำสั่งซื้อของฉัน" }
+              ] : []),
             ].map(({ to, label }) => (
               <Link
                 key={to}
@@ -88,6 +117,11 @@ export default function Navbar() {
                 aria-label="ตะกร้าสินค้า"
               >
                 <ShoppingCart className="w-7 h-7 text-green-700" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </button>
             )}
             {/* Bell Notification Icon: แสดงเฉพาะเมื่อ login */}
@@ -97,13 +131,14 @@ export default function Navbar() {
                 title="แจ้งเตือน"
                 aria-label="แจ้งเตือน"
                 style={{ position: 'relative' }}
+                onClick={() => navigate('/users/notifications')}
               >
                 <Bell className="w-7 h-7 text-green-700" />
                 {/* สามารถเพิ่ม badge แจ้งเตือนได้ที่นี่ */}
               </button>
             )}
             {user ? (
-              <div className="relative">
+              <div className="relative flex flex-col items-center">
                 {/* ไอคอนโปรไฟล์ */}
                 <button
                   className="p-2 rounded-full hover:bg-gray-100 transition"
@@ -112,8 +147,24 @@ export default function Navbar() {
                   aria-haspopup="true"
                   aria-expanded={isMenuOpen === 'user'}
                 >
-                  <UserCircle className="w-7 h-7 text-green-700" />
+                  {user.profile_picture ? (
+                    <img
+                      src={`${host}${user.profile_picture}`}
+                      alt="Profile"
+                      className="w-7 h-7 rounded-full object-cover border-2 border-green-700"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
+                    />
+                  ) : null}
+                  <UserCircle className={`w-7 h-7 text-green-700 ${user.profile_picture ? 'hidden' : ''}`} />
                 </button>
+                {user?.name && (
+                  <span className="text-xs mt-1 text-green-800 font-medium truncate max-w-[80px] text-center">
+                    {user.name}
+                  </span>
+                )}
                 {/* Dropdown เมนู */}
                 {isMenuOpen === 'user' && (
                   <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-10 animate-fade-in border border-gray-100">
@@ -125,33 +176,6 @@ export default function Navbar() {
                       className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-100"
                     >
                       โปรไฟล์ของฉัน
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        navigate('/users/favorite');
-                      }}
-                      className="block w-full text-left px-4 py-2 text-pink-600 hover:bg-gray-100"
-                    >
-                      ❤️ รายการโปรด
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        navigate('/users/orders');
-                      }}
-                      className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-gray-100"
-                    >
-                      🛒 คำสั่งซื้อของฉัน
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        navigate('/users/payments');
-                      }}
-                      className="block w-full text-left px-4 py-2 text-indigo-600 hover:bg-gray-100"
-                    >
-                      💳 การชำระเงิน
                     </button>
                     <button
                       onClick={() => {
@@ -205,6 +229,11 @@ export default function Navbar() {
                       aria-label="ตะกร้าสินค้า"
                     >
                       <ShoppingCart className="w-7 h-7 text-green-700" />
+                      {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {cartCount}
+                        </span>
+                      )}
                     </button>
                   )}
                   {/* Bell Notification Icon (Mobile): แสดงเฉพาะเมื่อ login */}
@@ -221,33 +250,30 @@ export default function Navbar() {
                   {/* เมนูเฉพาะตอนล็อกอิน */}
                   {user && (
                     <>
-                      <button
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          navigate('/users/favorite');
-                        }}
-                        className="w-full text-left px-5 py-2 text-pink-600 hover:bg-gray-100 rounded-md font-semibold"
+                      <Link
+                        to="/users/favorite"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="font-semibold transition-colors duration-200 w-full text-left px-5 py-2"
+                        style={{ color: '#ec4899', fontFamily: "'Prompt', sans-serif", textDecoration: 'none', borderRadius: '0.375rem' }}
                       >
-                        ❤️ รายการโปรด
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          navigate('/users/orders');
-                        }}
-                        className="w-full text-left px-5 py-2 text-blue-600 hover:bg-gray-100 rounded-md font-semibold"
+                        รายการโปรด
+                      </Link>
+                      <Link
+                        to="/users/orders"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="font-semibold transition-colors duration-200 w-full text-left px-5 py-2"
+                        style={{ color: '#2563eb', fontFamily: "'Prompt', sans-serif", textDecoration: 'none', borderRadius: '0.375rem' }}
                       >
-                        🛒 คำสั่งซื้อของฉัน
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          navigate('/users/payments');
-                        }}
-                        className="w-full text-left px-5 py-2 text-indigo-600 hover:bg-gray-100 rounded-md font-semibold"
+                        คำสั่งซื้อของฉัน
+                      </Link>
+                      <Link
+                        to="/users/payments"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="font-semibold transition-colors duration-200 w-full text-left px-5 py-2"
+                        style={{ color: '#6366f1', fontFamily: "'Prompt', sans-serif", textDecoration: 'none', borderRadius: '0.375rem' }}
                       >
-                        💳 การชำระเงิน
-                      </button>
+                        การชำระเงิน
+                      </Link>
                     </>
                   )}
                   {/* เมนูหลัก */}
@@ -255,6 +281,7 @@ export default function Navbar() {
                     { to: "/home", label: "หน้าแรก" },
                     { to: "/products", label: "สินค้า" },
                     { to: "/contact", label: "ติดต่อเรา" },
+
                   ].map(({ to, label }) => (
                     <Link
                       key={to}

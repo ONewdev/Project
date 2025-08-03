@@ -1,10 +1,9 @@
 const db = require('../db');
-const path = require('path');
-const fs = require('fs');
+const knex = require('../db');
 
 // 1. บันทึกข้อมูลการชำระเงิน
 exports.createPayment = async (req, res) => {
-  const { customer_id, order_id, amount, payment_method } = req.body;
+  const { customer_id, order_id, amount } = req.body;
   const file = req.file;
 
   try {
@@ -12,16 +11,28 @@ exports.createPayment = async (req, res) => {
       customer_id,
       order_id,
       amount,
-      payment_method,
-      proof_image: file?.filename,
-      payment_status: 'pending'
+      image: file?.filename,
+      status: 'pending'
     });
+
+    // อัปเดตสถานะ order เป็น 'processing' ทันทีหลังแจ้งชำระเงิน
+    await db('orders').where({ id: order_id }).update({ status: 'processing' });
+    // ดึงข้อมูล order เพื่อลดจำนวนสินค้า
+    const order = await db('orders').where({ id: order_id }).first();
+    console.log('Order for payment:', order);
+    if (order && order.product_id && order.quantity) {
+      // ลดจำนวนสินค้าใน products
+      await db('products')
+        .where({ id: order.product_id })
+        .decrement('quantity', order.quantity);
+    }
 
     res.json({ success: true, id });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Insert payment failed' });
   }
+  
 };
 
 // 2. ตรวจสอบสถานะการชำระเงิน
@@ -41,6 +52,7 @@ exports.checkPaymentStatus = async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'ตรวจสอบการชำระเงินล้มเหลว' });
   }
+  
 };
 
 // 3. อัปเดตสถานะการชำระเงิน (แอดมินยืนยัน)
@@ -50,8 +62,7 @@ exports.updatePaymentStatus = async (req, res) => {
 
   try {
     await db('payments').where({ id }).update({
-      payment_status: status,
-      paid_at: status === 'paid' ? new Date() : null
+      status
     });
 
     res.json({ success: true });

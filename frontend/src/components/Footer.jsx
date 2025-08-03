@@ -1,5 +1,6 @@
 import React from 'react';
-import { Star, Shield, Truck, Phone, Mail, MapPin, Facebook, Instagram, MessageCircle } from 'lucide-react';
+import { Phone, Mail, MapPin} from 'lucide-react';
+
 
 
 
@@ -14,18 +15,14 @@ function Footer() {
             <p className="text-gray-400 mb-4" style={{ fontFamily: "'Prompt', sans-serif" }}>
               ผู้เชี่ยวชาญด้านอลูมิเนียมและกระจก มากกว่า 15 ปี
             </p>
-            <div className="flex space-x-4">
-              <Facebook className="w-6 h-6 text-gray-400 hover:text-gray-200 cursor-pointer" />
-              <Instagram className="w-6 h-6 text-gray-400 hover:text-gray-200 cursor-pointer" />
-              <MessageCircle className="w-6 h-6 text-gray-400 hover:text-gray-200 cursor-pointer" />
-            </div>
+            
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-100">เมนูหลัก</h3>
             <ul className="space-y-2 text-gray-400">
               <li><a href="#" className="hover:text-white">หน้าแรก</a></li>
               <li><a href="#" className="hover:text-white">สินค้า</a></li>
-              <li><a href="#" className="hover:text-white">บริการ</a></li>
+              <li><a href="#" className="hover:text-white">ติดต่อเรา</a></li>
             
             </ul>
           </div>

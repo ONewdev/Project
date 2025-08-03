@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
 
+
 function Notifications() {
   const host = import.meta.env.VITE_HOST;
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
-    // ตัวอย่าง: ดึงการแจ้งเตือนจาก backend (แก้ endpoint ตามจริง)
-    fetch(`${host}/api/customers/notifications`, { credentials: 'include' })
+    if (!user.id) return;
+    fetch(`${host}/api/customers/notifications?customer_id=${user.id}`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         setNotifications(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [host]);
+  }, [host, user.id]);
 
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white rounded-xl shadow p-8">

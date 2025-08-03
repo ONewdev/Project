@@ -1,4 +1,5 @@
 // GET: ดึงข้อความทั้งหมด (admin)
+const db = require('../db'); 
 exports.getAllMessages = async (req, res) => {
   try {
     const messages = await db('messages').orderBy('created_at', 'asc');
@@ -8,7 +9,7 @@ exports.getAllMessages = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
-const db = require('../db'); // Knex instance
+// Knex instance
 
 // GET: ดึงข้อความระหว่าง 2 คน
 exports.getMessages = async (req, res) => {

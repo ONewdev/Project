@@ -6,6 +6,7 @@ import Customers from "../pages/admin/Customers";
 import Products from "../pages/admin/Products";
 import Category from "../pages/admin/Category";
 import Orders from "../pages/admin/Orders";
+import PaymentCheck from "../pages/admin/PaymentCheck"; // New PaymentCheck page
 import ChatAdmin from "../pages/admin/ChatAdmin"; // New ChatAdmin page
 import Contact from "../pages/admin/Contact";
 import Stock from "../pages/admin/Stock";
@@ -34,6 +35,7 @@ export default function AdminRoutes() {
           <Route path="products" element={<Products />} />
           <Route path="categories" element={<Category />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="payment-check" element={<PaymentCheck />} /> 
           <Route path="chat" element={<ChatAdmin />} /> 
           <Route path="contact" element={<Contact />} />
           <Route path="stock" element={<Stock />} />

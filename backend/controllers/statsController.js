@@ -12,10 +12,10 @@ exports.getStatistics = async (req, res) => {
       .first();
 
     res.json({
-      customers: totalCustomers.count,
-      orders: totalOrders.count,
-      products: totalProducts.count,
-      totalSales: totalSales.sum || 0,
+      customers: Number(totalCustomers.count) || 0,
+      orders: Number(totalOrders.count) || 0,
+      products: Number(totalProducts.count) || 0,
+      totalSales: Number(totalSales.sum) || 0,
     });
   } catch (err) {
     console.error('Error getting statistics:', err);

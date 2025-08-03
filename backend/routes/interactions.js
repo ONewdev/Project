@@ -2,10 +2,9 @@ const express = require('express');
 const router = express.Router();
 const interactionController = require('../controllers/interactionController');
 
-// Like routes
-router.post('/like', interactionController.likeProduct);
-router.post('/unlike', interactionController.unlikeProduct);
-router.get('/like/status', interactionController.checkLikeStatus);
+// Rating routes
+router.get('/rating/status', interactionController.checkRatingStatus); 
+router.post('/ratings', interactionController.submitOrUpdateRating); 
 
 // Favorite routes
 router.post('/favorite', interactionController.favoriteProduct);

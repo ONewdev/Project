@@ -1,12 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-
-  // ใช้ localStorage แทน fetch
   const [user, setUser] = useState(() => {
     const u = localStorage.getItem('user');
     return u ? JSON.parse(u) : null;
@@ -15,6 +12,47 @@ export function AuthProvider({ children }) {
     const a = localStorage.getItem('admin_user');
     return a ? JSON.parse(a) : null;
   });
+
+  // Fetch user data from backend on mount if user exists
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (token && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          const host = import.meta.env.VITE_HOST;
+          
+          const response = await fetch(`${host}/api/customers/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const updatedUser = await response.json();
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          } else {
+            // ถ้า token ไม่ถูกต้อง ให้ล้างข้อมูล
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // ถ้าเกิด error ให้ล้างข้อมูล
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     // sync user/admin เมื่อมีการเปลี่ยนแปลง localStorage (เช่น login/logout)

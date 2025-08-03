@@ -1,5 +1,4 @@
 
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,8 +10,9 @@ function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
+  
 
-  // ใช้ key ตาม user id
+  // ใช้ key ตาม user id หรือ guest
   const getCartKey = () => (user ? `cart_${user.id}` : 'cart_guest');
 
   // โหลดข้อมูลคำสั่งซื้อจาก backend
@@ -52,6 +52,9 @@ function Orders() {
       const cartKey = getCartKey();
       const savedCart = JSON.parse(localStorage.getItem(cartKey)) || [];
       setCart(savedCart);
+      
+      // Dispatch event เพื่ออัปเดต cart count ใน Navbar
+      window.dispatchEvent(new Event('cartUpdated'));
     }
   }, [user]);
 
@@ -62,6 +65,9 @@ function Orders() {
     const newCart = currentCart.filter((item) => (item.product_id || item.id) !== productId);
     localStorage.setItem(cartKey, JSON.stringify(newCart));
     setCart(newCart);
+    
+    // Dispatch event เพื่ออัปเดต cart count ใน Navbar
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   // เพิ่ม/ลดจำนวนสินค้า
@@ -80,6 +86,9 @@ function Orders() {
     
     localStorage.setItem(cartKey, JSON.stringify(newCart));
     setCart(newCart);
+    
+    // Dispatch event เพื่ออัปเดต cart count ใน Navbar
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   // คำนวณยอดรวมของตะกร้า
@@ -101,6 +110,9 @@ function Orders() {
     const cartKey = getCartKey();
     localStorage.removeItem(cartKey);
     setCart([]);
+    
+    // Dispatch event เพื่ออัปเดต cart count ใน Navbar
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   // แสดงสถานะคำสั่งซื้อ
@@ -141,6 +153,29 @@ function Orders() {
     return grouped;
   };
 
+  // --- เพิ่มฟังก์ชันยืนยันรับสินค้า ---
+  const handleConfirmOrder = async (orderId) => {
+    try {
+      const response = await fetch(`${host}/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'delivered' }),
+        credentials: 'include',
+      });
+      if (response.ok) {
+        // รีเฟรชข้อมูลออเดอร์ใหม่
+        const updatedOrders = await fetch(`${host}/api/orders/customer/${user.id}`, { credentials: 'include' });
+        if (updatedOrders.ok) {
+          setOrders(await updatedOrders.json());
+        }
+      } else {
+        alert('เกิดข้อผิดพลาดในการยืนยันรับสินค้า');
+      }
+    } catch (error) {
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -150,6 +185,30 @@ function Orders() {
       </div>
     );
   }
+  const handleCancelOrder = async (orderId) => {
+    
+    // return alert('ยกเลิกออเดอร์ยังไม่พร้อมใช้งาน');
+    if (!window.confirm('คุณต้องการยกเลิกออเดอร์นี้ใช่หรือไม่?')) return;
+    try {
+      const response = await fetch(`${host}/api/orders/${orderId}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (response.ok) {
+        // รีเฟรชข้อมูลออเดอร์ใหม่
+        const updatedOrders = await fetch(`${host}/api/orders/customer/${user.id}`, { credentials: 'include' });
+        if (updatedOrders.ok) {
+          setOrders(await updatedOrders.json());
+        }
+      } else {
+        alert('เกิดข้อผิดพลาดในการยกเลิกออเดอร์');
+      }
+    } catch (error) {
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+      console.error('Error cancelling order:', error);
+    }
+  };
 
   const groupedOrders = groupOrdersByDate(orders);
 
@@ -177,7 +236,17 @@ function Orders() {
                 <tbody>
                   {cart.map((item, idx) => (
                     <tr key={item.product_id || item.id || idx} className="border-b last:border-b-0">
-                      <td className="px-3 py-2 align-middle">{item.product_name || item.name}</td>
+                      <td className="px-3 py-2 align-middle">
+                        {item.product_name || item.name}
+                        {item.product_id && (
+                          <button
+                            className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs"
+                            onClick={() => navigate(`/home/product/${item.product_id}`)}
+                          >
+                            ดูรายละเอียด
+                          </button>
+                        )}
+                      </td>
                       <td className="px-3 py-2 align-middle">
                         <div className="flex items-center justify-center gap-2">
                           <button
@@ -199,7 +268,9 @@ function Orders() {
                         </div>
                       </td>
                       <td className="px-3 py-2 align-middle text-right">
-                        ฿{Number(item.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                        {item.price !== undefined && item.price !== null && !isNaN(Number(item.price))
+                          ? `฿${Number(item.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}`
+                          : '-'}
                       </td>
                       <td className="px-3 py-2 align-middle text-center">
                         <button
@@ -256,26 +327,75 @@ function Orders() {
                   <h3 className="text-lg font-semibold mb-4">{date}</h3>
                   <div className="space-y-4">
                     {dateOrders.map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          {order.image_url && (
-                            <img
-                              src={`${host}${order.image_url}`}
-                              alt={order.product_name}
-                              className="w-16 h-16 object-cover rounded"
-                            />
-                          )}
+                      <div key={order.id} className="p-4 border rounded-lg mb-4">
+                        <div className="flex items-center justify-between mb-2">
                           <div>
-                            <h4 className="font-medium">{order.product_name}</h4>
-                            <p className="text-sm text-gray-500">จำนวน: {order.quantity}</p>
-                            <p className="text-sm text-gray-500">คำสั่งซื้อ #{order.id}</p>
+                            <span className="font-semibold">รหัสออเดอร์: #{String(order.id).padStart(4, '0')}</span>
+                            <span className="ml-4 text-sm text-gray-500">{getStatusText(order.status)}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold text-lg">
+                              {order.total_price !== undefined && order.total_price !== null && !isNaN(Number(order.total_price))
+                                ? `฿${Number(order.total_price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}`
+                                : '-'}
+                            </span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold">฿{parseFloat(order.total_price).toLocaleString()}</p>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {getStatusText(order.status)}
-                          </span>
+                        {/* แสดงรายการสินค้าในออเดอร์ */}
+                        <div className="flex flex-wrap gap-4 mb-2">
+                          {order.items && order.items.length > 0 ? order.items.map((item, idx) => (
+                            <div key={item.id || idx} className="flex items-center gap-2 border rounded p-2 bg-gray-50">
+                              {item.image_url && (
+                                <img src={`${host}${item.image_url}`} alt={item.product_name} className="w-12 h-12 object-cover rounded" />
+                              )}
+                              <div>
+                                <div className="font-medium">{item.product_name}</div>
+                                <div className="text-xs text-gray-500">จำนวน: {item.quantity}</div>
+                                <div className="text-xs text-gray-500">ราคา: {item.price !== undefined && item.price !== null && !isNaN(Number(item.price)) ? `฿${Number(item.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}` : '-'}</div>
+                              </div>
+                            </div>
+                          )) : <span className="text-gray-400">ไม่มีสินค้า</span>}
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {/* ปุ่มชำระเงิน เฉพาะสถานะ pending เท่านั้น */}
+                          {order.status === 'pending' && (
+                            <button
+                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                              onClick={() => navigate(`/users/payments?order_id=${order.id}`)}
+                            >
+                              ชำระเงิน
+                            </button>
+                          )}
+                          {/* ปุ่มยืนยันรับสินค้า เฉพาะสถานะ shipped */}
+                          {order.status === 'shipped' && (
+                            <button
+                              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
+                              onClick={() => handleConfirmOrder(order.id)}
+                            >
+                              ยืนยันรับสินค้า
+                            </button>
+                          )}
+                          {/* ปุ่มยกเลิกออเดอร์ เฉพาะสถานะที่ยกเลิกได้ */}
+                          {(order.status === 'pending' || order.status === 'confirmed' || order.status === 'processing') && (
+                            <button
+                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
+                              onClick={() => handleCancelOrder(order.id)}
+                            >
+                              ยกเลิกออเดอร์
+                            </button>
+                          )}
+                          {/* ปุ่มดูใบเสร็จ (ยกเว้นสถานะ cancelled) */}
+                          {order.status !== 'cancelled' && (
+                            <a
+                              href={`${host}/api/orders/${order.id}/receipt`}
+                              className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-xs"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download={`receipt_order_${order.id}.pdf`}
+                            >
+                              ดาวน์โหลดใบเสร็จ
+                            </a>
+                          )}
                         </div>
                       </div>
                     ))}

@@ -1,196 +1,176 @@
-import React from 'react'
-
-
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 
-function Orders() {
-  const [orders, setOrders] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editOrder, setEditOrder] = useState(null);
-  const [form, setForm] = useState({ customer: '', total: '', status: '' });
+export default function AdminOrders() {
   const host = import.meta.env.VITE_HOST;
+  const [orders, setOrders] = useState([]);
+  const [filterStatus, setFilterStatus] = useState('all');
 
- useEffect(() => {
-  fetch(`${host}/api/orders`)
-    .then(res => res.json())
-    .then(data => {
-      console.log('🟢 orders data:', data); // ✅ log response
-      if (Array.isArray(data)) {
+  useEffect(() => {
+    fetch(`${host}/api/orders`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('orders:', data); // debug log
         setOrders(data);
-      } else {
-        console.error('❌ orders is not array:', data); // ✅ ตรวจจับข้อมูลผิดรูปแบบ
-        setOrders([]);
-      }
-    })
-    .catch(err => {
-      console.error('❌ fetch error:', err); // ✅ จับ error เครือข่าย
-    });
-}, [host]);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleAction = async (id, action) => {
+    let confirmText = '', successText = '', method = 'PUT';
+    if (action === 'approve') {
+      confirmText = 'คุณต้องการอนุมัติคำสั่งซื้อนี้ใช่ไหม?';
+      successText = 'อนุมัติคำสั่งซื้อเรียบร้อยแล้ว';
+    } else if (action === 'ship') {
+      confirmText = 'คุณต้องการยืนยันการจัดส่งหรือไม่?';
+      successText = 'ยืนยันการจัดส่งเรียบร้อยแล้ว';
+    } else if (action === 'receive') {
+      confirmText = 'คุณต้องการยืนยันการรับสินค้าหรือไม่?';
+      successText = 'ยืนยันการรับสินค้าเรียบร้อยแล้ว';
+    }
 
-  const handleAdd = () => {
-    setEditOrder(null);
-    setForm({ customer: '', total: '', status: '' });
-    setShowModal(true);
-  };
-
-  const handleEdit = order => {
-    setEditOrder(order);
-    setForm({ customer: order.customer, total: order.total, status: order.status });
-    setShowModal(true);
-  };
-
-  const handleDelete = id => {
-    Swal.fire({
-      title: 'ลบคำสั่งซื้อ?',
-      text: 'คุณต้องการลบคำสั่งซื้อนี้หรือไม่',
-      icon: 'warning',
+    const result = await Swal.fire({
+      title: 'ยืนยันการทำรายการ',
+      text: confirmText,
+      icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'ใช่, ลบเลย',
+      confirmButtonText: 'ยืนยัน',
       cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#16a34a',
-    }).then(result => {
-      if (result.isConfirmed) {
-        fetch(`${host}/api/orders/${id}`, { method: 'DELETE' })
-          .then(res => res.json())
-          .then(() => {
-            setOrders(prev => prev.filter(a => a.id !== id));
-            Swal.fire('ลบแล้ว!', '', 'success');
-          });
-      }
     });
-  };
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    if (editOrder) {
-      // update
-      fetch(`${host}/api/orders/${editOrder.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setOrders(prev => prev.map(a => (a.id === editOrder.id ? { ...a, ...form } : a)));
-          setShowModal(false);
-          Swal.fire('สำเร็จ', 'อัปเดตข้อมูลคำสั่งซื้อแล้ว', 'success');
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`${host}/api/orders/${id}/${action}`, {
+          method,
         });
-    } else {
-      // create
-      fetch(`${host}/api/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setOrders(prev => [...prev, data]);
-          setShowModal(false);
-          Swal.fire('สำเร็จ', 'เพิ่มคำสั่งซื้อแล้ว', 'success');
-        });
+        if (res.ok) {
+          const updated = await res.json();
+          setOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
+          Swal.fire('สำเร็จ', successText, 'success');
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 
+  
+
+  const getStatusColor = (status) => {
+    const map = {
+      pending: 'text-yellow-600 bg-yellow-100',
+      approved: 'text-blue-600 bg-blue-100',
+      shipped: 'text-purple-600 bg-purple-100',
+      received: 'text-green-600 bg-green-100',
+      cancelled: 'text-red-600 bg-red-100',
+      
+      processing: 'text-orange-600 bg-orange-100',
+      completed: 'text-green-700 bg-green-200',
+    };
+    return `px-2 py-1 rounded text-sm font-medium ${map[status] || 'bg-gray-100 text-gray-600'}`;
+  };
+
+  const statusMapping = {
+    pending: "รอดำเนินการ",
+    approved: "อนุมัติแล้ว",
+    shipped: "จัดส่งแล้ว",
+    received: "รับสินค้าแล้ว",
+    processing: "กำลังจัดส่ง",
+    completed: "สำเร็จแล้ว",
+    cancelled: "ยกเลิก"
+    
+  };
+
+  const filteredOrders = filterStatus === 'all'
+    ? orders
+    : orders.filter((order) => order.status === filterStatus);
+
   return (
-    <div className="container mx-auto mt-8 pl-24">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">จัดการคำสั่งซื้อ</h2>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">จัดการคำสั่งซื้อ</h1>
+
+      <div className="mb-4">
+        <label className="mr-2">กรองสถานะ:</label>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="border rounded p-1"
         >
-          + เพิ่มคำสั่งซื้อ
-        </button>
+          <option value="all">ทั้งหมด</option>
+          {Object.entries(statusMapping).map(([key, value]) => (
+            <option key={key} value={key}>{value}</option>
+          ))}
+        </select>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded shadow">
-          <thead>
-            <tr className="bg-green-100 text-green-800">
-              <th className="py-2 px-4">ลูกค้า</th>
-              <th className="py-2 px-4">ยอดรวม</th>
-              <th className="py-2 px-4">สถานะ</th>
-              <th className="py-2 px-4">Actions</th>
+
+      <table className="w-full border text-sm">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border px-4 py-2">#</th>
+            <th className="border px-4 py-2">ลูกค้า</th>
+            <th className="border px-4 py-2">สินค้า</th>
+            <th className="border px-4 py-2">ยอดรวม</th>
+           
+            <th className="border px-4 py-2">ที่อยู่จัดส่ง</th>
+            <th className="border px-4 py-2">วันที่สั่งซื้อ</th>
+            <th className="border px-4 py-2">สถานะ</th>
+            <th className="border px-4 py-2">การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredOrders.map((order, index) => (
+            <tr key={order.id}>
+              <td className="border px-4 py-2 text-center">{index + 1}</td>
+              <td className="border px-4 py-2">{order.customer_name}</td>
+              <td className="border px-4 py-2">
+                {order.items && order.items.length > 0 ? (
+                  <ul className="list-disc pl-4">
+                    {order.items.map((item, idx) => (
+                      <li key={item.id ? `item-${item.id}` : `idx-${idx}`}>
+                        {item.product_name} <span className="text-xs text-gray-500">x{item.quantity}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <span className="text-gray-400">-</span>}
+              </td>
+              <td className="border px-4 py-2">{order.total_price !== undefined && order.total_price !== null && !isNaN(Number(order.total_price)) ? `฿${Number(order.total_price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}` : '-'}</td>
+              <td className="border px-4 py-2">{order.shipping_address}</td>
+              <td className="border px-4 py-2">{new Date(order.created_at).toLocaleDateString('th-TH')}</td>
+              <td className="border px-4 py-2">
+                <span className={getStatusColor(order.status)}>{statusMapping[order.status] || order.status}</span>
+              </td>
+              <td className="border px-4 py-2 space-x-1">
+                {/* ปุ่ม action ตามสถานะ */}
+                {order.status === 'pending' && (
+                  <button
+                    onClick={() => handleAction(order.id, 'approve')}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                  >อนุมัติ</button>
+                )}
+                {order.status === 'approved' && (
+                  <button
+                    onClick={() => handleAction(order.id, 'ship')}
+                    className="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded"
+                  >จัดส่ง</button>
+                )}
+                {order.status === 'shipped' && (
+                  <button
+                    onClick={() => handleAction(order.id, 'receive')}
+                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded"
+                  >ยืนยันรับ</button>
+                )}
+                {/* เพิ่มปุ่มยกเลิก ถ้าต้องการ */}
+                {['pending', 'approved'].includes(order.status) && (
+                  <button
+                    onClick={() => handleAction(order.id, 'cancel')}
+                    className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+                  >ยกเลิก</button>
+                )}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {orders.length === 0 ? (
-              <tr><td colSpan={4} className="text-center py-4 text-gray-500">ไม่มีข้อมูล</td></tr>
-            ) : (
-              orders.map(order => (
-                <tr key={order.id} className="border-b">
-                  <td className="py-2 px-4">{order.customer_id}</td>
-                  <td className="py-2 px-4">{order.total_price}</td>
-                  <td className="py-2 px-4">{order.status}</td>
-                  <td className="py-2 px-4 flex gap-2">
-                    <button
-                      onClick={() => handleEdit(order)}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >แก้ไข</button>
-                    <button
-                      onClick={() => handleDelete(order.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                    >ลบ</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setShowModal(false)}></div>
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">{editOrder ? 'แก้ไขคำสั่งซื้อ' : 'เพิ่มคำสั่งซื้อ'}</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ลูกค้า</label>
-                <input
-                  name="customer"
-                  value={form.customer}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ยอดรวม</label>
-                <input
-                  name="total"
-                  value={form.total}
-                  onChange={handleChange}
-                  type="number"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">สถานะ</label>
-                <input
-                  name="status"
-                  value={form.status}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">ยกเลิก</button>
-                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">บันทึก</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
-
-export default Orders

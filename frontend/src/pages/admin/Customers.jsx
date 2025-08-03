@@ -17,20 +17,42 @@ function Customers() {
   }, []);
 
   const handleStatusChange = (id, status) => {
-    fetch(`${host}/api/customers/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setCustomers((prev) =>
-          prev.map((customer) =>
-            customer.id === id ? { ...customer, status } : customer
-          )
-        );
-      })
-      .catch((err) => console.error('Status change error:', err));
+    const statusText = status === 'active' ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+    const customer = customers.find(c => c.id === id);
+    
+    Swal.fire({
+      title: 'ยืนยันการเปลี่ยนแปลงสถานะ',
+      text: `คุณต้องการ${statusText} ${customer?.name || 'ลูกค้า'} หรือไม่?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'ใช่, เปลี่ยนแปลง',
+      cancelButtonText: 'ยกเลิก',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`${host}/api/customers/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        })
+          .then((res) => res.json())
+          .then(() => {
+            setCustomers((prev) =>
+              prev.map((customer) =>
+                customer.id === id ? { ...customer, status } : customer
+              )
+            );
+            Swal.fire(
+              'สำเร็จ!',
+              `สถานะของ ${customer?.name || 'ลูกค้า'} ถูก${statusText}แล้ว`,
+              'success'
+            );
+          })
+          .catch((err) => {
+            console.error('Status change error:', err);
+            Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเปลี่ยนแปลงสถานะได้', 'error');
+          });
+      }
+    });
   };
 
   const handleDelete = (id) => {
@@ -71,10 +93,15 @@ function Customers() {
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
+    
+    // แยกข้อมูลสำหรับอัปเดตข้อมูลทั่วไป
+    const { email, name, status } = editCustomer;
+    const updateData = { email, name, status };
+    
     fetch(`${host}/api/customers/${editCustomer.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editCustomer),
+      body: JSON.stringify(updateData),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -100,13 +127,26 @@ function Customers() {
       name: 'Updated At',
       selector: (row) => new Date(row.updated_at).toLocaleString(),
     },
-    { name: 'Status', selector: (row) => row.status },
+    {
+      name: 'Status',
+      cell: (row) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            row.status === 'active'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {row.status === 'active' ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+        </span>
+      ),
+    },
     {
       name: 'Profile Picture',
       cell: (row) =>
         row.profile_picture ? (
           <img
-            src={row.profile_picture}
+            src={`http://localhost:3001${row.profile_picture}`}
             alt="Profile"
             className="w-10 h-10 rounded-full object-cover"
           />
@@ -118,31 +158,34 @@ function Customers() {
       name: 'Actions',
       cell: (row) => (
         <div className="flex gap-2">
-          <button
-            onClick={() => handleStatusChange(row.id, 'active')}
-            className="px-2 py-1 text-green-600 border border-green-300 rounded hover:bg-green-50 transition-colors"
-            title="Activate"
-          >
-            <FaCheck />
-          </button>
-          <button
-            onClick={() => handleStatusChange(row.id, 'inactive')}
-            className="px-2 py-1 text-yellow-600 border border-yellow-300 rounded hover:bg-yellow-50 transition-colors"
-            title="Deactivate"
-          >
-            <FaBan />
-          </button>
+          {row.status === 'active' ? (
+            <button
+              onClick={() => handleStatusChange(row.id, 'inactive')}
+              className="px-2 py-1 text-yellow-600 border border-yellow-300 rounded hover:bg-yellow-50 transition-colors"
+              title="ปิดใช้งาน"
+            >
+              <FaBan />
+            </button>
+          ) : (
+            <button
+              onClick={() => handleStatusChange(row.id, 'active')}
+              className="px-2 py-1 text-green-600 border border-green-300 rounded hover:bg-green-50 transition-colors"
+              title="เปิดใช้งาน"
+            >
+              <FaCheck />
+            </button>
+          )}
           <button
             onClick={() => handleEdit(row.id)}
             className="px-2 py-1 text-blue-600 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
-            title="Edit"
+            title="แก้ไข"
           >
             <FaEdit />
           </button>
           <button
             onClick={() => handleDelete(row.id)}
             className="px-2 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors"
-            title="Delete"
+            title="ลบ"
           >
             <FaTrash />
           </button>
@@ -211,7 +254,20 @@ function Customers() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                {/* เพิ่มฟิลด์อื่นๆ ได้ตามต้องการ */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    value={editCustomer?.status || 'active'}
+                    onChange={handleEditChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="active">เปิดใช้งาน</option>
+                    <option value="inactive">ปิดใช้งาน</option>
+                  </select>
+                </div>
               </div>
 
               {/* Footer */}

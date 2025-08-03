@@ -41,11 +41,21 @@ export default function Login() {
           navigate('/home');
         });
       } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'เข้าสู่ระบบไม่สำเร็จ',
-          text: data.message || 'เข้าสู่ระบบไม่สำเร็จ',
-        });
+        // ตรวจสอบสถานะ HTTP เพื่อแสดงข้อความที่เหมาะสม
+        if (res.status === 403) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'บัญชีถูกปิดใช้งาน',
+            text: data.message || 'บัญชีของคุณถูกปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ',
+            confirmButtonText: 'เข้าใจแล้ว'
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'เข้าสู่ระบบไม่สำเร็จ',
+            text: data.message || 'เข้าสู่ระบบไม่สำเร็จ',
+          });
+        }
       }
     } catch (error) {
       alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');

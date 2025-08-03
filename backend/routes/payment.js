@@ -8,8 +8,14 @@ const upload = multer({
   dest: path.join(__dirname, '../public/uploads/payments')
 });
 
+// รองรับทั้ง proof_image และ image
+function flexibleSingleFile(req, res, next) {
+  const field = req.headers['content-type']?.includes('multipart') && req.body?.image ? 'image' : 'proof_image';
+  return upload.single(field)(req, res, next);
+}
+
 // ชำระเงิน (แนบหลักฐาน)
-router.post('/', upload.single('proof_image'), paymentController.createPayment);
+router.post('/', flexibleSingleFile, paymentController.createPayment);
 
 // ตรวจสอบสถานะ
 router.get('/status/:order_id', paymentController.checkPaymentStatus);

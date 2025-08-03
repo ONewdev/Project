@@ -6,10 +6,8 @@ import { FaBars } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const menuItems = [
-  { to: '/users/profile', icon: '👤', label: 'โปรไฟล์ของฉัน' },
   { to: '/users/favorite', icon: '❤️', label: 'รายการโปรด' },
   { to: '/users/orders', icon: '🛒', label: 'คำสั่งซื้อของฉัน' },
-  { to: '/users/payments', icon: '💳', label: 'การชำระเงิน' },
   { to: '/users/notifications', icon: '🔔', label: 'แจ้งเตือน' },
 ];
 
@@ -17,8 +15,10 @@ export default function SidebarProflie() {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState({ name: 'Guest', email: '', profile_picture: '' });
+  const host = import.meta.env.VITE_HOST;
 
   useEffect(() => {
+    // Load Google Fonts for Thai language support
     if (!document.getElementById('kanit-font')) {
       const link = document.createElement('link');
       link.id = 'kanit-font';
@@ -26,11 +26,23 @@ export default function SidebarProflie() {
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
-    // ดึง user จาก cookie auth (Navbar จะ sync state ให้ ถ้าใช้ global context สามารถปรับได้)
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
+
+    // ดึง user จาก localStorage และ sync เมื่อมีการเปลี่ยนแปลง
+    const getUser = () => {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
+    };
+
+    getUser();
+    window.addEventListener('userChanged', getUser);
+    window.addEventListener('storage', getUser);
+
+    return () => {
+      window.removeEventListener('userChanged', getUser);
+      window.removeEventListener('storage', getUser);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -45,26 +57,33 @@ export default function SidebarProflie() {
       cancelButtonText: 'ยกเลิก'
     }).then((result) => {
       if (result.isConfirmed) {
-        // เรียก logout backend (cookie auth)
-        fetch(`${import.meta.env.VITE_HOST}/api/customers/logout`, { method: 'POST', credentials: 'include' })
-          .finally(() => {
-            localStorage.removeItem('user');
-            Swal.fire({
-              icon: 'success',
-              title: 'ออกจากระบบแล้ว',
-              showConfirmButton: false,
-              timer: 1200,
-              confirmButtonColor: '#16a34a'
-            }).then(() => {
-              window.dispatchEvent(new Event('userChanged'));
-              navigate('/home');
-            });
+        // เรียก logout backend
+        fetch(`${host}/api/customers/logout`, { 
+          method: 'POST', 
+          credentials: 'include' 
+        }).finally(() => {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          setUser({ name: 'Guest', email: '', profile_picture: '' });
+          Swal.fire({
+            icon: 'success',
+            title: 'ออกจากระบบแล้ว',
+            showConfirmButton: false,
+            timer: 1200,
+            confirmButtonColor: '#16a34a'
+          }).then(() => {
+            window.dispatchEvent(new Event('userChanged'));
+            navigate('/home');
           });
+        });
       }
     });
   };
 
   const toggleSidebar = () => setCollapsed(!collapsed);
+
+  // ตรวจสอบว่า user มีข้อมูลหรือไม่
+  const isLoggedIn = user && user.id;
 
   return (
     <div
@@ -75,60 +94,102 @@ export default function SidebarProflie() {
         position: 'fixed',
         background: 'linear-gradient(180deg, #bbf7d0 0%, #22c55e 100%)',
         color: '#166534',
-        fontFamily: "'Kanit', sans-serif"
+        fontFamily: "'Kanit', sans-serif",
+        zIndex: 1000
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        {!collapsed && <h5 style={{ fontWeight: 700, letterSpacing: 1 }}>User Menu</h5>}
-        <button onClick={toggleSidebar} className="btn btn-sm btn-outline-success border-0">
+        {!collapsed && <h5 style={{ fontWeight: 700, letterSpacing: 1 }}>เมนูผู้ใช้</h5>}
+        <button 
+          onClick={toggleSidebar} 
+          className="btn btn-sm btn-outline-success border-0"
+          title={collapsed ? 'ขยายเมนู' : 'ย่อเมนู'}
+        >
           <FaBars />
         </button>
       </div>
+      
       <div className="d-flex flex-column align-items-center mb-4">
         <img
-          src={user.profile_picture || '/images/no-image.png'}
+          src={user.profile_picture ? `${host}${user.profile_picture}` : '/images/655fc323-6c03-4394-ba95-5280da436298.jpg'}
           alt="Profile"
           className="rounded-circle mb-2"
-          style={{ width: 60, height: 60, objectFit: 'cover', border: '2px solid #22c55e' }}
+          style={{ 
+            width: 60, 
+            height: 60, 
+            objectFit: 'cover', 
+            border: '2px solid #22c55e',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+          onError={(e) => {
+            e.target.src = '/images/655fc323-6c03-4394-ba95-5280da436298.jpg';
+          }}
         />
-        {!collapsed && <>
-          <div style={{ fontWeight: 600 }}>{user.name}</div>
-          <div style={{ fontSize: 13 }}>{user.email}</div>
-        </>}
+        {!collapsed && (
+          <>
+            <div style={{ fontWeight: 600, textAlign: 'center' }}>
+              {isLoggedIn ? user.name : 'ผู้เยี่ยมชม'}
+            </div>
+            {isLoggedIn && (
+              <div style={{ fontSize: 13, color: '#166534', opacity: 0.8 }}>
+                {user.email}
+              </div>
+            )}
+          </>
+        )}
       </div>
+      
       <ul className="nav flex-column mb-3">
-        <li className="nav-item">
-          <Link to="/" className="nav-link sidebar-link text-success" style={{ fontWeight: 500 }}>
-            🏠 {!collapsed && 'กลับหน้าแรก'}
-          </Link>
-        </li>
-        {menuItems.map((item, idx) => (
-          <li className="nav-item" key={idx}>
+        
+        {isLoggedIn ? (
+          // แสดงเมนูสำหรับผู้ใช้ที่ล็อกอินแล้ว
+          menuItems.map((item, idx) => (
+            <li className="nav-item" key={idx}>
+              <Link
+                to={item.to}
+                className="nav-link sidebar-link text-success"
+                style={{ fontWeight: 500 }}
+              >
+                {item.icon} {!collapsed && item.label}
+              </Link>
+            </li>
+          ))
+        ) : (
+          // แสดงเมนูสำหรับผู้เยี่ยมชม
+          <li className="nav-item">
             <Link
-              to={item.to}
+              to="/login"
               className="nav-link sidebar-link text-success"
               style={{ fontWeight: 500 }}
             >
-              {item.icon} {!collapsed && item.label}
+              🔐 {!collapsed && 'เข้าสู่ระบบ'}
             </Link>
           </li>
-        ))}
-        <li className="nav-item">
-          <button
-            onClick={handleLogout}
-            className="btn btn-link nav-link text-success text-start sidebar-link"
-            style={{ fontWeight: 500 }}
-          >
-            🔓 {!collapsed && 'ออกจากระบบ'}
-          </button>
-        </li>
+        )}
+        
+        {isLoggedIn && (
+          <li className="nav-item">
+            <button
+              onClick={handleLogout}
+              className="btn btn-link nav-link text-success text-start sidebar-link"
+              style={{ fontWeight: 500 }}
+            >
+              🔓 {!collapsed && 'ออกจากระบบ'}
+            </button>
+          </li>
+        )}
       </ul>
+      
       <style>{`
         .sidebar-link:hover, .sidebar-link:focus {
           background: rgba(34,197,94,0.12);
           color: #166534 !important;
           border-radius: 8px;
           text-decoration: none;
+          transition: all 0.2s ease;
+        }
+        .sidebar-link {
+          transition: all 0.2s ease;
         }
       `}</style>
     </div>

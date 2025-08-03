@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 24, 2025 at 12:43 PM
+-- Generation Time: Aug 01, 2025 at 02:20 PM
 -- Server version: 5.7.24
 -- PHP Version: 8.0.1
 
@@ -100,7 +100,7 @@ CREATE TABLE `contact` (
 --
 
 INSERT INTO `contact` (`name`, `tel`, `gmail`, `map`, `time`, `id`) VALUES
-('Aluglaue Pro', '099-999-9999', 'A&G@gmail.com', 'https://www.google.com/maps/embed?pb=!4v1752974298441!6m8!1m7!1s8mYw-Ou6n1GQUv1RwTxmsQ!2m2!1d20.36825582310125!2d99.87733385345288!3f247.06!4f-8.099999999999994!5f0.7820865974627469', '08:00 - 16:00 ', 1);
+('Aluglaue Pro', '099-999-9999', 'A&G@gmail.com', 'https://www.google.com/maps/embed?pb=!4v1752974298441!6m8!1m7!1s8mYw-Ou6n1GQUv1RwTxmsQ!2m2!1d20.36825582310125!2d99.87733385345288!3f247.06!4f-8.099999999999994!5f0.7820865974627469', '08:00 - 16:00 น.', 1);
 
 -- --------------------------------------------------------
 
@@ -124,8 +124,8 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `email`, `password`, `name`, `created_at`, `updated_at`, `status`, `profile_picture`) VALUES
-(2, 'test@gmail.com', '$2b$10$8z.xBLdlYfFzT1dHhVR9uetRP6ilSTBj5KuMliRjS9fCcwX6UC2W2', 'test', '2025-06-21 09:12:09', '2025-06-21 09:12:09', 'active', NULL),
-(3, '5555@gmail.com', '$2b$10$WFRXTemwQnU5Wu9dPb7cIOQsDkp0z4gOxxUnQcrlkRN9IyA9xSu6W', 'new', '2025-06-22 07:10:58', '2025-06-22 07:10:58', 'active', NULL);
+(2, 'test@gmail.com', '$2b$10$8z.xBLdlYfFzT1dHhVR9uetRP6ilSTBj5KuMliRjS9fCcwX6UC2W2', 'test', '2025-06-21 09:12:09', '2025-07-28 01:48:28', 'active', NULL),
+(3, '5555@gmail.com', '$2b$10$WFRXTemwQnU5Wu9dPb7cIOQsDkp0z4gOxxUnQcrlkRN9IyA9xSu6W', 'new', '2025-06-22 07:10:58', '2025-07-27 11:31:44', 'active', NULL);
 
 -- --------------------------------------------------------
 
@@ -139,6 +139,44 @@ CREATE TABLE `favorites` (
   `product_id` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `favorites`
+--
+
+INSERT INTO `favorites` (`id`, `customer_id`, `product_id`, `created_at`) VALUES
+(6, 2, 2, '2025-07-29 08:55:49');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `knex_migrations`
+--
+
+CREATE TABLE `knex_migrations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `batch` int(11) DEFAULT NULL,
+  `migration_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `knex_migrations_lock`
+--
+
+CREATE TABLE `knex_migrations_lock` (
+  `index` int(10) UNSIGNED NOT NULL,
+  `is_locked` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `knex_migrations_lock`
+--
+
+INSERT INTO `knex_migrations_lock` (`index`, `is_locked`) VALUES
+(1, 0);
 
 -- --------------------------------------------------------
 
@@ -167,6 +205,24 @@ CREATE TABLE `messages` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Dumping data for table `messages`
+--
+
+INSERT INTO `messages` (`id`, `sender_id`, `receiver_id`, `message`, `created_at`) VALUES
+(1, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:11:27'),
+(2, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:16:17'),
+(3, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:18:20'),
+(4, 0, 1, 'ติดต่อจากฟอร์ม: test\n444444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:21:28'),
+(5, 0, 1, 'ติดต่อจากฟอร์ม: test\n-\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:41:10'),
+(6, 0, 1, 'ติดต่อจากฟอร์ม: test\n55555\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:48:54'),
+(7, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444444\nจาก: FN11 (test@gmail.com)', '2025-07-26 08:15:43'),
+(8, 0, 1, 'ติดต่อจากฟอร์ม: test\n-\nจาก: FN11 (test@gmail.com)', '2025-07-26 08:20:02'),
+(9, 0, 1, 'ติดต่อจากฟอร์ม: test\n----\nจาก: FN11 (4444@gmail.com)', '2025-07-26 08:22:53'),
+(10, 0, 1, 'ติดต่อจากฟอร์ม\nชื่อ: FN11\nอีเมล: 4444@gmail.com\nเบอร์โทร: 099-999-9999\nหัวข้อ: test\nข้อความ: ---', '2025-07-26 08:26:27'),
+(11, 0, 1, 'ติดต่อจากฟอร์ม\nชื่อ: FN11\nอีเมล: test@gmail.com\nเบอร์โทร: 099-999-9999\nหัวข้อ: test\nข้อความ: 2222', '2025-07-26 08:29:43'),
+(12, 0, 1, 'ติดต่อจากฟอร์ม\nชื่อ: FN11\nอีเมล: test@gmail.com\nเบอร์โทร: 099-999-9999\nหัวข้อ: เทส\nข้อความ: 5', '2025-07-26 08:45:19');
+
 -- --------------------------------------------------------
 
 --
@@ -175,22 +231,40 @@ CREATE TABLE `messages` (
 
 CREATE TABLE `orders` (
   `id` int(11) NOT NULL,
-  `customer_id` int(11) NOT NULL,
-  `order_date` datetime DEFAULT CURRENT_TIMESTAMP,
-  `status` varchar(50) DEFAULT 'pending',
-  `total_price` decimal(10,2) NOT NULL
+  `customer_id` int(11) DEFAULT NULL,
+  `product_id` int(11) DEFAULT NULL,
+  `quantity` int(11) NOT NULL,
+  `total_price` decimal(10,2) DEFAULT NULL,
+  `order_type` enum('standard','custom') DEFAULT 'standard',
+  `status` enum('pending','processing','completed','cancelled') DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `shipping_address` text,
+  `phone` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`id`, `customer_id`, `order_date`, `status`, `total_price`) VALUES
-(1, 101, '2025-07-01 10:30:00', 'pending', '4500.00'),
-(2, 102, '2025-07-02 14:15:00', 'confirmed', '7800.00'),
-(3, 101, '2025-07-05 09:45:00', 'shipped', '12000.00'),
-(4, 103, '2025-07-10 16:00:00', 'cancelled', '6500.00'),
-(5, 104, '2025-07-15 13:20:00', 'completed', '9800.00');
+INSERT INTO `orders` (`id`, `customer_id`, `product_id`, `quantity`, `total_price`, `order_type`, `status`, `created_at`, `shipping_address`, `phone`) VALUES
+(1, 2, 1, 1, '3500.00', 'standard', 'pending', '2025-07-28 12:01:07', NULL, NULL),
+(2, 2, 2, 1, '2200.00', 'standard', 'pending', '2025-07-29 07:00:02', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `order_custom_details`
+--
+
+CREATE TABLE `order_custom_details` (
+  `id` int(11) NOT NULL,
+  `order_id` int(11) DEFAULT NULL,
+  `width` float DEFAULT NULL,
+  `height` float DEFAULT NULL,
+  `material` text,
+  `special_request` text,
+  `estimated_price` decimal(10,2) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -214,11 +288,11 @@ CREATE TABLE `order_items` (
 
 CREATE TABLE `payments` (
   `id` int(11) NOT NULL,
-  `order_id` int(11) DEFAULT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `amount` decimal(10,2) DEFAULT NULL,
-  `payment_slip_url` varchar(255) DEFAULT NULL,
-  `status` enum('pending','confirmed') DEFAULT 'pending',
+  `customer_id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `image` varchar(255) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -257,7 +331,8 @@ INSERT INTO `products` (`id`, `name`, `description`, `category_id`, `price`, `qu
 (7, 'กระจกฝ้า', 'กระจกฝ้าสำหรับห้องน้ำหรือห้องประชุม', 4, '1800.00', 10, 'uploads/products/frosted_glass.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0007', 'ฝ้า'),
 (8, 'ประตูบานสวิง', 'ประตูอลูมิเนียมแบบบานสวิงสำหรับห้องต่างๆ', 1, '3200.00', 7, 'uploads/products/swing_door.jpg', 'inactive', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0008', 'ดำ'),
 (9, 'ราวกันตกกระจก', 'ราวกันตกพร้อมกระจกนิรภัยเหมาะสำหรับระเบียง', 2, '6800.00', 4, 'uploads/products/railing.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0009', 'ใส'),
-(10, 'ประตูบานเฟี้ยม', 'ประตูบานเฟี้ยมอลูมิเนียมแบบพับเก็บได้', 1, '5500.00', 6, 'uploads/products/folding_door.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0010', 'ขาว');
+(10, 'ประตูบานเฟี้ยม', 'ประตูบานเฟี้ยมอลูมิเนียมแบบพับเก็บได้', 1, '5500.00', 6, 'uploads/products/folding_door.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0010', 'ขาว'),
+(11, 'มุ้งสีขาว', '-', 6, '800.00', 6, '/uploads/products/1753774633580-258389718.png', 'active', '2025-07-29 07:37:13', '2025-07-29 07:48:43', 'P00011', NULL);
 
 -- --------------------------------------------------------
 
@@ -270,6 +345,21 @@ CREATE TABLE `product_colors` (
   `product_id` int(11) DEFAULT NULL,
   `color_name` varchar(50) DEFAULT NULL,
   `color_code` varchar(10) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_ratings`
+--
+
+CREATE TABLE `product_ratings` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `rating` tinyint(4) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -344,6 +434,18 @@ ALTER TABLE `favorites`
   ADD KEY `product_id` (`product_id`);
 
 --
+-- Indexes for table `knex_migrations`
+--
+ALTER TABLE `knex_migrations`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `knex_migrations_lock`
+--
+ALTER TABLE `knex_migrations_lock`
+  ADD PRIMARY KEY (`index`);
+
+--
 -- Indexes for table `likes`
 --
 ALTER TABLE `likes`
@@ -361,7 +463,16 @@ ALTER TABLE `messages`
 -- Indexes for table `orders`
 --
 ALTER TABLE `orders`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`),
+  ADD KEY `product_id` (`product_id`);
+
+--
+-- Indexes for table `order_custom_details`
+--
+ALTER TABLE `order_custom_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `order_id` (`order_id`);
 
 --
 -- Indexes for table `order_items`
@@ -373,14 +484,17 @@ ALTER TABLE `order_items`
 -- Indexes for table `payments`
 --
 ALTER TABLE `payments`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`),
+  ADD KEY `order_id` (`order_id`);
 
 --
 -- Indexes for table `products`
 --
 ALTER TABLE `products`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `product_code` (`product_code`);
+  ADD UNIQUE KEY `product_code` (`product_code`),
+  ADD KEY `fk_category` (`category_id`);
 
 --
 -- Indexes for table `product_colors`
@@ -388,6 +502,13 @@ ALTER TABLE `products`
 ALTER TABLE `product_colors`
   ADD PRIMARY KEY (`id`),
   ADD KEY `product_id` (`product_id`);
+
+--
+-- Indexes for table `product_ratings`
+--
+ALTER TABLE `product_ratings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_rating` (`customer_id`,`product_id`);
 
 --
 -- Indexes for table `stocks`
@@ -427,7 +548,19 @@ ALTER TABLE `customers`
 -- AUTO_INCREMENT for table `favorites`
 --
 ALTER TABLE `favorites`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `knex_migrations`
+--
+ALTER TABLE `knex_migrations`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `knex_migrations_lock`
+--
+ALTER TABLE `knex_migrations_lock`
+  MODIFY `index` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `likes`
@@ -439,13 +572,19 @@ ALTER TABLE `likes`
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `order_custom_details`
+--
+ALTER TABLE `order_custom_details`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `order_items`
@@ -463,12 +602,18 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `product_colors`
 --
 ALTER TABLE `product_colors`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `product_ratings`
+--
+ALTER TABLE `product_ratings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -493,14 +638,42 @@ ALTER TABLE `comments`
 --
 ALTER TABLE `favorites`
   ADD CONSTRAINT `favorites_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `favorites_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `favorites_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `favorites_ibfk_3` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`);
 
 --
 -- Constraints for table `likes`
 --
 ALTER TABLE `likes`
   ADD CONSTRAINT `likes_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `likes_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `likes_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `likes_ibfk_3` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`);
+
+--
+-- Constraints for table `orders`
+--
+ALTER TABLE `orders`
+  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
+  ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+--
+-- Constraints for table `order_custom_details`
+--
+ALTER TABLE `order_custom_details`
+  ADD CONSTRAINT `order_custom_details_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `payments`
+--
+ALTER TABLE `payments`
+  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
+  ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`);
+
+--
+-- Constraints for table `products`
+--
+ALTER TABLE `products`
+  ADD CONSTRAINT `fk_category` FOREIGN KEY (`category_id`) REFERENCES `category` (`category_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `product_colors`

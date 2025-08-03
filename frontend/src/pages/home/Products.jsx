@@ -5,15 +5,15 @@ import Slidebar from "../../components/Slidebar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ProductDetailModal from "./ProductDetail";
-import { FaHeart, FaRegHeart, FaThumbsUp, FaRegThumbsUp } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaStar } from "react-icons/fa";
 import {
-  likeProduct,
-  unlikeProduct,
+  submitRating,
   addFavorite,
   removeFavorite,
 } from "../../services/likeFavoriteService";
 
 function Products() {
+  
   useEffect(() => {
     const link = document.createElement("link");
     link.href =
@@ -37,33 +37,53 @@ function Products() {
   const [comparison, setComparison] = useState([]);
   const [showCompare, setShowCompare] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
-  const [likedProducts, setLikedProducts] = useState({});
+  const [productRatings, setProductRatings] = useState({});
   const [favoritedProducts, setFavoritedProducts] = useState({});
+  const [imageLoadingStates, setImageLoadingStates] = useState({});
   // โหลดสถานะ like/favorite ของแต่ละสินค้า
 
 
   const fetchStatuses = async () => {
     if (!user) return;
-    const likes = {};
+    
+    const ratings = {}; 
     const favs = {};
+    
     for (const p of products) {
       try {
-        const likeRes = await fetch(
-          `${host}/api/interactions/like/status?customer_id=${user.id}&product_id=${p.id}`);
-        const likeData = await likeRes.json();
-        likes[p.id] = likeData.liked;
+        // เรียก API เพื่อดึง rating status
+        const ratingRes = await fetch(
+          `${host}/api/interactions/rating/status?customer_id=${user.id}&product_id=${p.id}`
+        );
+        
+        if (ratingRes.ok) {
+          const ratingData = await ratingRes.json();
+          ratings[p.id] = ratingData.rating || 0;
+        } else {
+          console.error(`Failed to fetch rating for product ${p.id}`);
+          ratings[p.id] = 0;
+        }
 
+        // เรียก API เพื่อดึง favorite status
         const favRes = await fetch(
           `${host}/api/interactions/favorite/status?customer_id=${user.id}&product_id=${p.id}`
         );
-        const favData = await favRes.json();
-        favs[p.id] = favData.favorited;
+        
+        if (favRes.ok) {
+          const favData = await favRes.json();
+          favs[p.id] = favData.favorited;
+        } else {
+          console.error(`Failed to fetch favorite for product ${p.id}`);
+          favs[p.id] = false;
+        }
       } catch (e) {
-        likes[p.id] = false;
+        console.error(`Error fetching statuses for product ${p.id}:`, e);
+        ratings[p.id] = 0;
         favs[p.id] = false;
       }
     }
-    setLikedProducts(likes);
+    
+    setProductRatings(ratings);
     setFavoritedProducts(favs);
   };
 
@@ -71,14 +91,39 @@ function Products() {
     if (products.length > 0) fetchStatuses();
   }, [products, user, host]);
 
-  const handleLike = async (productId) => {
-    if (!user) return alert("กรุณาเข้าสู่ระบบ");
-    if (likedProducts[productId]) {
-      await unlikeProduct(user.id, productId);
-    } else {
-      await likeProduct(user.id, productId);
+  // Preload images for better performance
+  useEffect(() => {
+    if (products.length > 0) {
+      products.slice(0, 6).forEach(product => {
+        if (product.image_url && product.image_url.trim()) {
+          const img = new Image();
+          img.src = getImageUrl(product.image_url);
+        }
+      });
     }
-    await fetchStatuses(); // รีเฟรชสถานะจาก backend จริง
+  }, [products]);
+
+  const handleRatingChange = async (productId, newRating) => {
+    console.log(`Rating clicked: Product ${productId}, Rating ${newRating}`);
+    if (!user) {
+      alert("กรุณาเข้าสู่ระบบ");
+      return;
+    }
+    try {
+      await submitRating(user.id, productId, newRating);
+      
+      // อัปเดต state ทันทีเพื่อการตอบสนองที่รวดเร็ว
+      setProductRatings(prevRatings => ({
+        ...prevRatings,
+        [productId]: newRating,
+      }));
+      
+      // แสดง feedback ให้ user ทราบ
+      console.log(`ให้คะแนน ${newRating} ดาวสำหรับสินค้า ${productId}`);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      alert("เกิดข้อผิดพลาดในการให้คะแนน");
+    }
   };
 
   const handleFavorite = async (productId) => {
@@ -87,6 +132,7 @@ function Products() {
       await removeFavorite(user.id, productId);
     } else {
       await addFavorite(user.id, productId);
+      // เด้งไปหน้า favorite หลังจากกด favorite
     }
     await fetchStatuses(); // รีเฟรชสถานะจาก backend จริง
   };
@@ -122,10 +168,10 @@ function Products() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        let url = `${host}/api/products`;
+        let url = `${host}/api/products?status=active`;
 
         if (selectedCategory) {
-          url += `?category_id=${selectedCategory}`;
+          url += `&category_id=${selectedCategory}`;
         }
 
         const res = await fetch(url);
@@ -143,6 +189,7 @@ function Products() {
 
         // 🔥 เอา filter searchTerm ออกจากที่นี่ เพราะจะทำใน useEffect อื่น
         setProducts(productList);
+        setImageLoadingStates({}); // Reset image loading states
         setLoading(false);
       } catch (err) {
         console.error("โหลดสินค้า error:", err);
@@ -234,26 +281,47 @@ function Products() {
     });
   };
   const handleAddToCart = (product) => {
-    if (!user) return alert("กรุณาเข้าสู่ระบบ");
-    const cartKey = `cart_${user.id}`;
+    let cartKey = user ? `cart_${user.id}` : 'cart_guest';
     const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
     const found = cart.find(item => item.id === product.id);
     if (found) {
       found.quantity += 1;
     } else {
-      cart.push({ ...product, quantity: 1 });
+      cart.push({ ...product, quantity: 1, price: Number(product.price) }); // <-- แก้ตรงนี้
     }
     localStorage.setItem(cartKey, JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
     alert('เพิ่มสินค้าลงตะกร้าแล้ว!');
   };
 
   const handleBuyNow = (product) => {
-    if (!user) return alert("กรุณาเข้าสู่ระบบ");
-    const cartKey = `cart_${user.id}`;
-    // ล้างตะกร้าและเพิ่มสินค้านี้เท่านั้น
-    const cart = [{ ...product, quantity: 1 }];
+    let cartKey = user ? `cart_${user.id}` : 'cart_guest';
+    const cart = [{ ...product, quantity: 1, price: Number(product.price) }]; // <-- แก้ตรงนี้
     localStorage.setItem(cartKey, JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
     navigate('/users/checkout');
+  };
+
+  const handleImageLoad = (productId) => {
+    setImageLoadingStates(prev => ({
+      ...prev,
+      [productId]: false
+    }));
+  };
+
+  const handleImageError = (productId) => {
+    setImageLoadingStates(prev => ({
+      ...prev,
+      [productId]: false
+    }));
+  };
+
+  // ฟังก์ชันสำหรับสร้าง URL รูปภาพ
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl || !imageUrl.trim()) {
+      return "/images/no-image.png";
+    }
+    return `${host}${imageUrl}`;
   };
 
   return (
@@ -261,6 +329,23 @@ function Products() {
       className="min-h-screen bg-gray-50"
       style={{ fontFamily: "'Prompt', 'Kanit', sans-serif" }}
     >
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .image-fade-in {
+          animation: fadeIn 0.3s ease-in;
+        }
+        /* Star rating icon styles */
+        .star-rating button {
+          transition: all 0.2s ease;
+        }
+        .star-rating button:hover {
+          transform: scale(1.1);
+        }
+
+      `}</style>
       <Navbar />
       <div className="w-full bg-gray/80 py-6 shadow text-left pl-10">
         <h1
@@ -272,12 +357,7 @@ function Products() {
       </div>
       <Slidebar />
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center mb-12 mt-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4 ">
-            สินค้ายอดนิยม
-          </h1>
-        </div>
-        {/* Search bar + ปุ่มสร้างสั่งทำสินค้า */}
+      
         <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="flex flex-col sm:flex-row gap-4 w-full">
             <select
@@ -353,16 +433,37 @@ function Products() {
                     className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 transform hover:-translate-y-1"
                   >
                     <div className="relative">
+                      {/* Loading skeleton */}
+                      {imageLoadingStates[product.id] !== false && (
+                        <div className="w-full h-64 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
+                          <div className="flex flex-col items-center space-y-2">
+                            <div className="w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="text-gray-500 text-sm">กำลังโหลด...</div>
+                          </div>
+                        </div>
+                      )}
                       <img
-                        src={
-                          `${host}${product.image_url}` ||
-                          "/images/no-image.png"
-                        }
+                        src={getImageUrl(product.image_url)}
                         alt={product.name}
-                        className="w-full h-64 object-cover"
+                        className={`w-full h-64 object-cover ${
+                          imageLoadingStates[product.id] === false ? 'image-fade-in' : 'opacity-0'
+                        }`}
+                        loading="lazy"
+                        onLoadStart={() => {
+                          setImageLoadingStates(prev => ({
+                            ...prev,
+                            [product.id]: true
+                          }));
+                        }}
+                        onLoad={() => {
+                          handleImageLoad(product.id);
+                        }}
                         onError={(e) => {
+                          handleImageError(product.id);
+                          // ป้องกันการ loop โดยตั้งค่า onerror เป็น null ก่อน
                           e.target.onerror = null;
-                          e.target.src = "/images/watermark.png";
+                          // ใช้รูป fallback ที่มีอยู่จริง
+                          e.target.src = "/images/no-image.png";
                         }}
                       />
                       {product.originalPrice > product.price && (
@@ -412,14 +513,28 @@ function Products() {
                           สั่งซื้อเลย
                         </button>
                       </div>
-                      <div className="flex gap-2 justify-between mb-2">
-                        <button
-                          onClick={() => handleLike(product.id)}
-                          className="text-blue-500 hover:text-blue-700 text-2xl transition"
-                          title="ถูกใจ"
-                        >
-                          {likedProducts[product.id] ? <FaThumbsUp /> : <FaRegThumbsUp />}
-                        </button>
+                                             <div className="flex gap-2 justify-between mb-2 items-center">
+                         <div className="flex items-center gap-2">
+                           <div className="flex gap-1 star-rating">
+                             {[1, 2, 3, 4, 5].map((star) => (
+                               <button
+                                 key={star}
+                                 onClick={() => handleRatingChange(product.id, star)}
+                                 className={`text-xl transition-colors ${
+                                   star <= (productRatings[product.id] || 0)
+                                     ? 'text-yellow-400 hover:text-yellow-500'
+                                     : 'text-gray-300 hover:text-yellow-400'
+                                 }`}
+                                 title={`ให้คะแนน ${star} ดาว`}
+                               >
+                                 <FaStar />
+                               </button>
+                             ))}
+                           </div>
+                           <span className="text-xs text-gray-500">
+                             ({productRatings[product.id] || 0}/5)
+                           </span>
+                         </div>
                         <button
                           onClick={() => handleFavorite(product.id)}
                           className="text-pink-500 hover:text-pink-700 text-2xl transition"
@@ -531,16 +646,13 @@ function Products() {
                           </button>
                           <div className="flex flex-col items-center">
                             <img
-                              src={
-                                p.image_url
-                                  ? `${host}${p.image_url}`
-                                  : "/images/watermark.png"
-                              }
+                              src={getImageUrl(p.image_url)}
                               alt={p.name}
                               className="h-24 w-24 object-cover rounded-xl border mb-2 shadow"
+                              loading="lazy"
                               onError={(e) => {
                                 e.target.onerror = null;
-                                e.target.src = "/images/watermark.png";
+                                e.target.src = "/images/no-image.png";
                               }}
                             />
                             <span className="font-bold text-base text-gray-800 text-center line-clamp-2 max-w-[120px]">
@@ -623,43 +735,17 @@ function Products() {
         />
       )}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
-        {/* ปุ่มแชท */}
-        <button
-          onClick={() => setShowChatModal(true)}
-          className="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition duration-300"
-          aria-label="ติดต่อแชท"
-        >
-          💬
-        </button>
-
-        {/* ปุ่มเลื่อนขึ้นบน */}
         {showScrollTop && (
           <button
             onClick={scrollToTop}
-            className="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition duration-300"
+            className="bg-green-600 hover:bg-green-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition duration-300"
             aria-label="กลับขึ้นด้านบน"
           >
             ↑
           </button>
         )}
       </div>
-      {showChatModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full relative">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
-              onClick={() => setShowChatModal(false)}
-            >
-              ×
-            </button>
-            <h2 className="text-xl font-bold text-green-700 mb-4">
-              💬 ติดต่อแชท
-            </h2>
-            <p>นี่คือตัวอย่างกล่องแชท...</p>
-            {/* คุณสามารถฝัง chat UI หรือ form ได้ตรงนี่ */}
-          </div>
-        </div>
-      )}
+     
       <Footer />
     </div>
   );

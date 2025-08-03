@@ -27,7 +27,7 @@ const uploadProductImage = upload.single('image'); // ใช้กับ field n
 // 1. Get all products
 const getAllProducts = async (req, res) => {
   try {
-    const { category_id } = req.query; // ✅ ดึง category_id จาก query string
+    const { category_id, status } = req.query; // ✅ ดึง status จาก query string
 
     let query = db('products')
       .leftJoin('category', 'products.category_id', 'category.category_id')
@@ -48,6 +48,10 @@ const getAllProducts = async (req, res) => {
     // ✅ เพิ่มเงื่อนไข filter หมวดหมู่ ถ้ามี
     if (category_id) {
       query = query.where('products.category_id', category_id);
+    }
+    // ✅ เพิ่ม filter สถานะ ถ้ามี
+    if (status) {
+      query = query.where('products.status', status);
     }
 
     const products = await query;

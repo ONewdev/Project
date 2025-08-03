@@ -1,20 +1,80 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { removeFavorite } from '../../services/likeFavoriteService';
+import { FaHeart, FaTrash } from 'react-icons/fa';
 
 function Favorite() {
   const host = import.meta.env.VITE_HOST;
+  const { user } = useAuth();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // ตัวอย่าง: ดึงสินค้าที่ถูกใจจาก API (แก้ endpoint ตาม backend จริง)
-    fetch(`${host}/api/customers/favorites`, { credentials: 'include' })
+  const fetchFavorites = () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // ดึงรายการโปรดจาก API ใหม่
+    fetch(`${host}/api/customers/${user.id}/favorites`, { 
+      credentials: 'include' 
+    })
       .then(res => res.json())
       .then(data => {
         setFavorites(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, [host]);
+      .catch((error) => {
+        console.error('Error fetching favorites:', error);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [host, user]);
+
+  const handleRemoveFavorite = async (productId) => {
+    if (!user) return;
+    
+    try {
+      await removeFavorite(user.id, productId);
+      // รีเฟรชรายการหลังจากลบ
+      fetchFavorites();
+      alert('ลบออกจากรายการโปรดแล้ว');
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      alert('เกิดข้อผิดพลาดในการลบรายการโปรด');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatPrice = (price) => {
+    const numPrice = parseFloat(price);
+    return isNaN(numPrice)
+      ? "-"
+      : `฿${numPrice.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`;
+  };
+
+  if (!user) {
+    return (
+      <div className="max-w-6xl mx-auto py-8 px-4">
+        <div className="text-center text-gray-500 py-12">
+          กรุณาเข้าสู่ระบบเพื่อดูรายการโปรด
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
@@ -28,20 +88,39 @@ function Favorite() {
           {favorites.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
+              className="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col relative"
             >
+              <button
+                onClick={() => handleRemoveFavorite(item.id)}
+                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition z-10"
+                title="ลบออกจากรายการโปรด"
+              >
+                <FaTrash size={12} />
+              </button>
               <img
                 src={item.image_url ? `${host}${item.image_url}` : '/images/no-image.png'}
                 alt={item.name}
                 className="w-full h-40 object-cover rounded-lg mb-4"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/images/watermark.png";
+                }}
               />
               <div className="flex-1">
                 <h3 className="font-semibold text-lg text-gray-800 mb-1">{item.name}</h3>
                 <div className="text-sm text-gray-500 mb-2">{item.category_name || '-'}</div>
                 <div className="text-green-600 font-bold text-lg mb-2">
-                  {item.price ? `฿${Number(item.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}` : '-'}
+                  {formatPrice(item.price)}
+                  {item.original_price && item.original_price > item.price && (
+                    <span className="ml-2 text-red-500 text-sm line-through">
+                      {formatPrice(item.original_price)}
+                    </span>
+                  )}
                 </div>
-                <p className="text-gray-600 text-sm line-clamp-2">{item.description}</p>
+                <p className="text-gray-600 text-sm line-clamp-2 mb-3">{item.description}</p>
+                <div className="text-xs text-gray-400 border-t pt-2">
+                  เพิ่มเมื่อ: {formatDate(item.favorited_at)}
+                </div>
               </div>
             </div>
           ))}
