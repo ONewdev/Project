@@ -56,7 +56,7 @@ export default function Login() {
         <h3 className="text-2xl font-bold text-center mb-6 text-green-700">Admin</h3>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Username</label>
+            <label className="block text-gray-700 font-medium mb-1">ชื่อผู้ใช้งาน</label>
             <input
               type="text"
               name="username"
@@ -68,7 +68,7 @@ export default function Login() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Password</label>
+            <label className="block text-gray-700 font-medium mb-1">รหัสผ่าน</label>
             <input
               type="password"
               name="password"

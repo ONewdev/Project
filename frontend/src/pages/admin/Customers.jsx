@@ -196,7 +196,7 @@ function Customers() {
 
   return (
     <div className="container mx-auto mt-8 pl-24">
-      <h2 className="text-2xl font-bold mb-6">Customer List</h2>
+      <h2 className="text-2xl font-bold mb-6">รายชื่อสมาชิก</h2>
       {customers.length > 0 ? (
         <DataTable columns={columns} data={customers} pagination />
       ) : (

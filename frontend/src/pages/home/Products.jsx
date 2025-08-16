@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Swal from 'sweetalert2';
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import Slidebar from "../../components/Slidebar";
@@ -139,7 +140,7 @@ function Products() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showChatModal, setShowChatModal] = useState(false);
+  
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -281,22 +282,40 @@ function Products() {
     });
   };
   const handleAddToCart = (product) => {
-    let cartKey = user ? `cart_${user.id}` : 'cart_guest';
+    if (!user) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า',
+        confirmButtonColor: '#16a34a',
+      });
+      return;
+    }
+    let cartKey = `cart_${user.id}`;
     const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
     const found = cart.find(item => item.id === product.id);
     if (found) {
       found.quantity += 1;
     } else {
-      cart.push({ ...product, quantity: 1, price: Number(product.price) }); // <-- แก้ตรงนี้
+      cart.push({ ...product, quantity: 1, price: Number(product.price) });
     }
     localStorage.setItem(cartKey, JSON.stringify(cart));
     window.dispatchEvent(new Event('cartUpdated'));
-    alert('เพิ่มสินค้าลงตะกร้าแล้ว!');
+    Swal.fire({
+      icon: 'success',
+      title: 'เพิ่มสินค้าลงตะกร้าแล้ว!',
+      showConfirmButton: false,
+      timer: 1200,
+      confirmButtonColor: '#16a34a',
+    });
   };
 
   const handleBuyNow = (product) => {
-    let cartKey = user ? `cart_${user.id}` : 'cart_guest';
-    const cart = [{ ...product, quantity: 1, price: Number(product.price) }]; // <-- แก้ตรงนี้
+    if (!user) {
+      alert('กรุณาเข้าสู่ระบบก่อนสั่งซื้อ');
+      return;
+    }
+    let cartKey = `cart_${user.id}`;
+    const cart = [{ ...product, quantity: 1, price: Number(product.price) }];
     localStorage.setItem(cartKey, JSON.stringify(cart));
     window.dispatchEvent(new Event('cartUpdated'));
     navigate('/users/checkout');
@@ -379,10 +398,10 @@ function Products() {
 
           {user && (
             <button
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition mb-2 sm:mb-0"
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition mb-2 sm:mb-0 "
               onClick={() => navigate("/custom-order")}
             >
-              + สร้างสั่งทำสินค้า
+              สั่งทำสินค้า
             </button>
           )}
           <div className="relative w-full sm:w-96">

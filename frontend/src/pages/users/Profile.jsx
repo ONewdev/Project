@@ -101,10 +101,57 @@ function Profile() {
     }
   };
 
+  // ฟังก์ชันลบบัญชี
+  const handleDeleteProfile = async () => {
+    const result = await Swal.fire({
+      title: 'คุณแน่ใจหรือไม่?',
+      text: 'การลบบัญชีจะลบข้อมูลของคุณทั้งหมดและไม่สามารถกู้คืนได้',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'ลบเลย',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+    });
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`${host}/api/customers/${user.user_id || user.id}/delete`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          Swal.fire({
+            icon: 'success',
+            title: 'ลบบัญชีสำเร็จ',
+            text: 'บัญชีของคุณถูกลบเรียบร้อย',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          // ลบข้อมูล user ใน localStorage และ redirect
+          localStorage.removeItem('user');
+          setUser(null);
+          window.location.href = '/';
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: data.message || 'ไม่สามารถลบบัญชีได้'
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
+        });
+      }
+    }
+  };
+
   return (
     <div className="max-w-xl mx-auto mt-10 bg-white rounded-xl shadow p-8">
       <h2 className="text-2xl font-bold mb-6 text-green-700">โปรไฟล์ของฉัน</h2>
-      
       {/* แสดงรูปโปรไฟล์ปัจจุบัน */}
       {user?.profile_picture && (
         <div className="mb-6 text-center">
@@ -116,7 +163,6 @@ function Profile() {
           <p className="text-sm text-gray-600 mt-2">รูปโปรไฟล์ปัจจุบัน</p>
         </div>
       )}
-      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-gray-700 font-medium mb-1">ชื่อ</label>
@@ -129,7 +175,6 @@ function Profile() {
             required
           />
         </div>
-        
         <div>
           <label className="block text-gray-700 font-medium mb-1">อีเมล</label>
           <input
@@ -141,7 +186,6 @@ function Profile() {
             required
           />
         </div>
-        
         <div>
           <label className="block text-gray-700 font-medium mb-1">รูปโปรไฟล์</label>
           <input
@@ -155,19 +199,16 @@ function Profile() {
             รองรับไฟล์ JPG, PNG, GIF ขนาดไม่เกิน 5MB
           </p>
         </div>
-        
         {successMsg && (
           <div className="p-3 bg-green-100 text-green-700 rounded-lg">
             {successMsg}
           </div>
         )}
-        
         {errorMsg && (
           <div className="p-3 bg-red-100 text-red-700 rounded-lg">
             {errorMsg}
           </div>
         )}
-        
         <button
           type="submit"
           disabled={loading}
@@ -176,6 +217,14 @@ function Profile() {
           {loading ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
         </button>
       </form>
+      {/* ปุ่มลบบัญชี */}
+      <button
+        type="button"
+        onClick={handleDeleteProfile}
+        className="w-full mt-6 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition duration-200 shadow"
+      >
+        ลบบัญชี
+      </button>
     </div>
   );
 }

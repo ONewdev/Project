@@ -8,6 +8,21 @@ import Slidebar from '../../components/Slidebar';
 import Footer from '../../components/Footer';
 
 function Contact() {
+  // ดึง lat/lng จากลิงก์ embed Google Maps
+  const getLatLngFromMapUrl = (mapUrl) => {
+    if (!mapUrl) return null;
+    // !2d<lng>!3d<lat>
+    const match = mapUrl.match(/!2d([\d.]+)!3d([\d.]+)/);
+    if (match) {
+      return `${match[2]},${match[1]}`;
+    }
+    // กรณี embed แบบใหม่ !1d<lat>!2d<lng>
+    const match2 = mapUrl.match(/!1d([\d.]+)!2d([\d.]+)/);
+    if (match2) {
+      return `${match2[1]},${match2[2]}`;
+    }
+    return null;
+  };
   // โหลด Google Fonts (Kanit + Prompt)
   useEffect(() => {
     const link = document.createElement('link');
@@ -29,7 +44,7 @@ function Contact() {
     message: ''
   });
   const [contactInfo, setContactInfo] = useState(null);
-  
+
 
   useEffect(() => {
     fetch(`${host}/api/contact`)
@@ -51,22 +66,24 @@ function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const user = localStorage.getItem('user');
-      const sender_id = user ? JSON.parse(user).id : 0; // 0 หรือ null สำหรับ guest
-      const receiver_id = 1; // สมมุติ admin id = 1
-      // รวมข้อมูลลูกค้าในข้อความ
-      const message = `ติดต่อจากฟอร์ม\nชื่อ: ${formData.name}\nอีเมล: ${formData.email}\nเบอร์โทร: ${formData.phone}\nหัวข้อ: ${formData.subject}\nข้อความ: ${formData.message}`;
-      await sendMessage({ sender_id, receiver_id, message });
-      alert('ขอบคุณสำหรับข้อความของคุณ! เราจะติดต่อกลับในเร็วๆ นี้');
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
+      const res = await fetch(`${host}/api/inbox`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
+      if (res.ok) {
+        alert('ขอบคุณสำหรับข้อความของคุณ! เราจะติดต่อกลับในเร็วๆ นี้');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        alert('มีบางอย่างผิดพลาด กรุณาลองใหม่ภายหลัง');
+      }
     } catch (error) {
       console.error('Error:', error);
       alert('มีบางอย่างผิดพลาด กรุณาลองใหม่ภายหลัง');
@@ -77,7 +94,7 @@ function Contact() {
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Prompt', 'Kanit', sans-serif" }}>
       <Navbar />
-       <div className="w-full bg-gray/80 py-6 shadow text-left pl-10">
+      <div className="w-full bg-gray/80 py-6 shadow text-left pl-10">
         <h1 className="text-3xl md:text-4xl font-bold text-green-700 tracking-wide" style={{ fontFamily: "'Kanit', 'Prompt', sans-serif" }}>ติดต่อเรา</h1>
       </div>
       <Slidebar />
@@ -85,7 +102,7 @@ function Contact() {
       <div className="py-16">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12">
-            
+
             {/* Contact Form */}
             <form className="bg-white rounded-lg shadow-lg p-8" onSubmit={handleSubmit}>
               <h2 className="text-2xl font-bold text-green-800 mb-6">ส่งข้อความถึงเรา</h2>
@@ -116,7 +133,7 @@ function Contact() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-green-700 font-medium mb-2">เบอร์โทร</label>
@@ -179,7 +196,7 @@ function Contact() {
                       <p className="text-green-700">{contactInfo?.address || '123 ถนนธุรกิจ แขวงลุมพินี\nเขตปทุมวัน กรุงเทพมหานคร 10330'}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-4">
                     <Phone className="text-green-600 mt-1" size={24} />
                     <div>
@@ -187,7 +204,7 @@ function Contact() {
                       <p className="text-green-700">{contactInfo?.phone || '+66 2 123 4567\n+66 8 1234 5678'}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-4">
                     <Mail className="text-green-600 mt-1" size={24} />
                     <div>
@@ -195,7 +212,7 @@ function Contact() {
                       <p className="text-green-700">{contactInfo?.email || 'info@yourcompany.com\ncontact@yourcompany.com'}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-4">
                     <Clock className="text-green-600 mt-1" size={24} />
                     <div>
@@ -208,8 +225,47 @@ function Contact() {
 
               {/* Map */}
               <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div className="p-6 border-b">
+                <div className="p-6 border-b flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-green-800">แผนที่</h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!contactInfo) return;
+
+                      // ใช้ map (ลิงก์ embed) จากฐานข้อมูล
+                      const mapUrl = contactInfo?.map || contactInfo?.map_url;
+                      const destination = getLatLngFromMapUrl(mapUrl)
+                        || (contactInfo?.latitude && contactInfo?.longitude
+                          ? `${contactInfo.latitude},${contactInfo.longitude}`
+                          : '13.744677989738,100.52631367775878'); // fallback
+
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                          const origin = `${position.coords.latitude},${position.coords.longitude}`;
+                          window.open(
+                            `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`,
+                            '_blank'
+                          );
+                        }, () => {
+                          // user ปฏิเสธ location → ใช้ destination เพียงอย่างเดียว
+                          window.open(
+                            `https://www.google.com/maps/dir/?api=1&destination=${destination}`,
+                            '_blank'
+                          );
+                        });
+                      } else {
+                        window.open(
+                          `https://www.google.com/maps/dir/?api=1&destination=${destination}`,
+                          '_blank'
+                        );
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                  >
+                    <MapPin size={20} />
+                    <span className="hidden md:inline">นำทางไปยังร้าน</span>
+                  </button>
+
                 </div>
                 <div className="h-80 bg-green-100 relative">
                   {/* Embedded Google Map */}
@@ -223,14 +279,6 @@ function Contact() {
                     referrerPolicy="no-referrer-when-downgrade"
                     className="absolute inset-0"
                   ></iframe>
-                  {/* Fallback content */}
-                  <div className="absolute inset-0 flex items-center justify-center text-green-500">
-                    <div className="text-center">
-                      <MapPin size={48} className="mx-auto mb-2" />
-                      <p>แผนที่ Google Maps</p>
-                      <p className="text-sm">{contactInfo?.address || '123 ถนนธุรกิจ แขวงลุมพินี เขตปทุมวัน'}</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

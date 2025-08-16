@@ -186,6 +186,7 @@ function Products() {
     // ตรวจสอบถ้าเป็นช่อง 'price' ให้ลบคอมม่าออกก่อน
     const updatedValue = name === 'price' ? removeCommas(value) : value;
     setEditProduct((prev) => ({ ...prev, [name]: updatedValue }));
+    console.log(editProduct)
   };
 
   const handleEditSubmit = async (e) => {
@@ -330,7 +331,7 @@ function Products() {
   const columns = [
     {
       name: 'รหัสสินค้า',
-      selector: (row) => row.product_code || `PD${String(row.id).padStart(4, '0')}`,
+      selector: (row) => row.product_code,
       sortable: true,
       width: '120px'
     },
@@ -573,23 +574,14 @@ function Products() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 รหัสสินค้า <span className="text-red-500">*</span>
               </label>
-              {editProduct?.product_code ? (
-                <input
-                  type="text"
-                  name="product_code"
-                  value={editProduct.product_code}
-                  onChange={handleEditChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              ) : (
-                <input
-                  type="text"
-                  value={`PD${String(editProduct?.id).padStart(4, '0')}`}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500"
-                />
-              )}
+              <input
+                type="text"
+                name="product_code"
+                value={editProduct?.product_code || ''}
+                onChange={handleEditChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

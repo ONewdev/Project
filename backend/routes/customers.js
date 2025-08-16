@@ -47,5 +47,7 @@ router.post('/register', customerController.registerCustomer);
 
 // ดึงรายการโปรดของลูกค้า
 router.get('/:id/favorites', customerController.getCustomerFavorites);
+// ลบโปรไฟล์ลูกค้า (delete account)
+router.delete('/:id/delete', customerController.deleteCustomerProfile);
 
 module.exports = router;

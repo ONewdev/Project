@@ -33,6 +33,7 @@ const getAllProducts = async (req, res) => {
       .leftJoin('category', 'products.category_id', 'category.category_id')
       .select(
         'products.id',
+        'products.product_code',
         'products.name',
         'products.description',
         'products.category_id',
@@ -151,7 +152,24 @@ const updateProduct = async (req, res) => {
     await db('products').where({ id }).update(updateData);
 
     // ดึงข้อมูล product ที่อัปเดตล่าสุดส่งกลับไป
-    const updatedProduct = await db('products').where({ id }).first();
+    const updatedProduct = await db('products')
+      .leftJoin('category', 'products.category_id', 'category.category_id')
+      .select(
+        'products.id',
+        'products.product_code',
+        'products.name',
+        'products.description',
+        'products.category_id',
+        'category.category_name as category_name',
+        'products.price',
+        'products.quantity',
+        'products.image_url',
+        'products.status',
+        'products.created_at',
+        'products.updated_at'
+      )
+      .where('products.id', id)
+      .first();
     res.json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error.message);
@@ -211,10 +229,11 @@ const getProductById = async (req, res) => {
       .leftJoin('category', 'products.category_id', 'category.category_id')
       .select(
         'products.id',
+        'products.product_code',
         'products.name',
         'products.description',
         'products.category_id',
-        'category.category_name',
+        'category.category_name as category_name',
         'products.price',
         'products.quantity',
         'products.image_url',

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 01, 2025 at 02:20 PM
+-- Generation Time: Aug 16, 2025 at 04:13 PM
 -- Server version: 5.7.24
 -- PHP Version: 8.0.1
 
@@ -124,8 +124,10 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `email`, `password`, `name`, `created_at`, `updated_at`, `status`, `profile_picture`) VALUES
-(2, 'test@gmail.com', '$2b$10$8z.xBLdlYfFzT1dHhVR9uetRP6ilSTBj5KuMliRjS9fCcwX6UC2W2', 'test', '2025-06-21 09:12:09', '2025-07-28 01:48:28', 'active', NULL),
-(3, '5555@gmail.com', '$2b$10$WFRXTemwQnU5Wu9dPb7cIOQsDkp0z4gOxxUnQcrlkRN9IyA9xSu6W', 'new', '2025-06-22 07:10:58', '2025-07-27 11:31:44', 'active', NULL);
+(2, 'test@gmail.com', '$2b$10$8z.xBLdlYfFzT1dHhVR9uetRP6ilSTBj5KuMliRjS9fCcwX6UC2W2', 'test', '2025-06-21 09:12:09', '2025-08-03 08:28:30', 'active', '/uploads/profiles/1754209709600-716124764.png'),
+(3, '5555@gmail.com', '$2b$10$WFRXTemwQnU5Wu9dPb7cIOQsDkp0z4gOxxUnQcrlkRN9IyA9xSu6W', 'new', '2025-06-22 07:10:58', '2025-08-16 06:14:44', 'active', NULL),
+(5, 'suchao@g.com', '$2b$10$50JngMBtrT75SixwnwhCpugrjwbcr7nfuBNKdGWvmOdsrVqCArJzW', 'suchao', '2025-08-03 09:35:45', '2025-08-03 09:37:00', 'active', '/uploads/profiles/1754213806596-84035250.jpg'),
+(6, 'test2@gmail.com', '$2b$10$VvPYgDUQj1Dq.7dAhweMzOjtG/6YDokkquER3BymR1vktiu1g5iyK', 'test2', '2025-08-04 02:19:49', '2025-08-04 02:24:09', 'active', '/uploads/profiles/1754274248776-442080720.png');
 
 -- --------------------------------------------------------
 
@@ -140,12 +142,28 @@ CREATE TABLE `favorites` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `favorites`
+-- Table structure for table `inbox`
 --
 
-INSERT INTO `favorites` (`id`, `customer_id`, `product_id`, `created_at`) VALUES
-(6, 2, 2, '2025-07-29 08:55:49');
+CREATE TABLE `inbox` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `subject` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `inbox`
+--
+
+INSERT INTO `inbox` (`id`, `name`, `email`, `phone`, `subject`, `message`, `created_at`) VALUES
+(1, 'test', 'test@gmail.com', '099-999-9999', 'test', '-', '2025-08-16 08:48:29');
 
 -- --------------------------------------------------------
 
@@ -181,13 +199,31 @@ INSERT INTO `knex_migrations_lock` (`index`, `is_locked`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `likes`
+-- Table structure for table `materials`
 --
 
-CREATE TABLE `likes` (
+CREATE TABLE `materials` (
   `id` int(11) NOT NULL,
-  `customer_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `unit` varchar(50) NOT NULL,
+  `quantity` decimal(10,2) DEFAULT '0.00',
+  `price` decimal(10,2) DEFAULT '0.00',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `material_usage`
+--
+
+CREATE TABLE `material_usage` (
+  `id` int(11) NOT NULL,
+  `material_id` int(11) NOT NULL,
+  `used_quantity` decimal(10,2) NOT NULL,
+  `used_by` varchar(255) DEFAULT NULL,
+  `usage_note` text,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -210,18 +246,42 @@ CREATE TABLE `messages` (
 --
 
 INSERT INTO `messages` (`id`, `sender_id`, `receiver_id`, `message`, `created_at`) VALUES
-(1, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:11:27'),
-(2, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:16:17'),
-(3, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:18:20'),
-(4, 0, 1, 'ติดต่อจากฟอร์ม: test\n444444\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:21:28'),
-(5, 0, 1, 'ติดต่อจากฟอร์ม: test\n-\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:41:10'),
-(6, 0, 1, 'ติดต่อจากฟอร์ม: test\n55555\nจาก: FN11 (4444@gmail.com)', '2025-07-26 07:48:54'),
-(7, 0, 1, 'ติดต่อจากฟอร์ม: test\n4444444\nจาก: FN11 (test@gmail.com)', '2025-07-26 08:15:43'),
-(8, 0, 1, 'ติดต่อจากฟอร์ม: test\n-\nจาก: FN11 (test@gmail.com)', '2025-07-26 08:20:02'),
-(9, 0, 1, 'ติดต่อจากฟอร์ม: test\n----\nจาก: FN11 (4444@gmail.com)', '2025-07-26 08:22:53'),
-(10, 0, 1, 'ติดต่อจากฟอร์ม\nชื่อ: FN11\nอีเมล: 4444@gmail.com\nเบอร์โทร: 099-999-9999\nหัวข้อ: test\nข้อความ: ---', '2025-07-26 08:26:27'),
-(11, 0, 1, 'ติดต่อจากฟอร์ม\nชื่อ: FN11\nอีเมล: test@gmail.com\nเบอร์โทร: 099-999-9999\nหัวข้อ: test\nข้อความ: 2222', '2025-07-26 08:29:43'),
-(12, 0, 1, 'ติดต่อจากฟอร์ม\nชื่อ: FN11\nอีเมล: test@gmail.com\nเบอร์โทร: 099-999-9999\nหัวข้อ: เทส\nข้อความ: 5', '2025-07-26 08:45:19');
+(17, 2, 1, '....', '2025-08-14 08:56:04'),
+(18, 1, 2, 'ว่าไงครับ', '2025-08-14 08:56:32'),
+(19, 1, 2, '??', '2025-08-15 07:20:51');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `type` varchar(20) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `message` text,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `customer_id`, `type`, `title`, `message`, `created_at`) VALUES
+(1, 2, 'success', 'คำสั่งซื้อได้รับการอนุมัติ', 'คำสั่งซื้อ #13 ของคุณได้รับการอนุมัติแล้ว', '2025-08-03 16:07:53'),
+(2, 2, 'success', 'ชำระเงินสำเร็จ', 'คำสั่งซื้อ #0014 ได้รับการยืนยันแล้ว ขอบคุณที่ใช้บริการค่ะ', '2025-08-03 16:13:14'),
+(3, 2, 'info', 'คำสั่งซื้อถูกจัดส่งแล้ว', 'คำสั่งซื้อ #14 ของคุณถูกจัดส่งแล้ว กรุณาตรวจสอบสถานะการจัดส่ง', '2025-08-03 16:20:15'),
+(4, 5, 'success', 'ชำระเงินสำเร็จ', 'คำสั่งซื้อ #0015 ได้รับการยืนยันแล้ว ขอบคุณที่ใช้บริการค่ะ', '2025-08-03 17:49:25'),
+(5, 2, 'success', 'ชำระเงินสำเร็จ', 'คำสั่งซื้อ #0016 ได้รับการยืนยันแล้ว ขอบคุณที่ใช้บริการค่ะ', '2025-08-03 18:15:22'),
+(6, 2, 'info', 'คำสั่งซื้อถูกจัดส่งแล้ว', 'คำสั่งซื้อ #16 ของคุณถูกจัดส่งแล้ว กรุณาตรวจสอบสถานะการจัดส่ง', '2025-08-03 18:15:37'),
+(7, 2, 'success', 'ชำระเงินสำเร็จ', 'คำสั่งซื้อ #0016 ได้รับการยืนยันแล้ว ขอบคุณที่ใช้บริการค่ะ', '2025-08-03 19:03:38'),
+(8, 2, 'success', 'คำสั่งซื้อได้รับการอนุมัติ', 'คำสั่งซื้อ #17 ของคุณได้รับการอนุมัติแล้ว', '2025-08-04 06:55:59'),
+(9, 2, 'info', 'คำสั่งซื้อถูกจัดส่งแล้ว', 'คำสั่งซื้อ #16 ของคุณถูกจัดส่งแล้ว กรุณาตรวจสอบสถานะการจัดส่ง', '2025-08-04 06:57:39'),
+(10, 5, 'info', 'คำสั่งซื้อถูกจัดส่งแล้ว', 'คำสั่งซื้อ #15 ของคุณถูกจัดส่งแล้ว กรุณาตรวจสอบสถานะการจัดส่ง', '2025-08-04 06:57:42'),
+(11, 6, 'success', 'ชำระเงินสำเร็จ', 'คำสั่งซื้อ #0017 ได้รับการยืนยันแล้ว ขอบคุณที่ใช้บริการค่ะ', '2025-08-04 09:42:35'),
+(12, 2, 'success', 'ชำระเงินสำเร็จ', 'คำสั่งซื้อ #0018 ได้รับการยืนยันแล้ว ขอบคุณที่ใช้บริการค่ะ', '2025-08-16 14:59:11');
 
 -- --------------------------------------------------------
 
@@ -233,10 +293,9 @@ CREATE TABLE `orders` (
   `id` int(11) NOT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `product_id` int(11) DEFAULT NULL,
-  `quantity` int(11) NOT NULL,
   `total_price` decimal(10,2) DEFAULT NULL,
   `order_type` enum('standard','custom') DEFAULT 'standard',
-  `status` enum('pending','processing','completed','cancelled') DEFAULT 'pending',
+  `status` varchar(20) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `shipping_address` text,
   `phone` varchar(20) DEFAULT NULL
@@ -246,9 +305,12 @@ CREATE TABLE `orders` (
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`id`, `customer_id`, `product_id`, `quantity`, `total_price`, `order_type`, `status`, `created_at`, `shipping_address`, `phone`) VALUES
-(1, 2, 1, 1, '3500.00', 'standard', 'pending', '2025-07-28 12:01:07', NULL, NULL),
-(2, 2, 2, 1, '2200.00', 'standard', 'pending', '2025-07-29 07:00:02', NULL, NULL);
+INSERT INTO `orders` (`id`, `customer_id`, `product_id`, `total_price`, `order_type`, `status`, `created_at`, `shipping_address`, `phone`) VALUES
+(14, 2, NULL, NULL, 'standard', 'delivered', '2025-08-03 09:09:58', '11/1', '099-999-9999'),
+(15, 5, NULL, NULL, 'standard', 'shipped', '2025-08-03 09:57:52', 'address', '0642578322'),
+(16, 2, NULL, NULL, 'standard', 'delivered', '2025-08-03 11:06:42', '11/1', '111111111'),
+(17, 6, NULL, NULL, 'standard', 'approved', '2025-08-04 02:39:49', '11/1', '099-999-9999'),
+(18, 2, NULL, NULL, 'standard', 'delivered', '2025-08-16 07:56:53', '-', '-');
 
 -- --------------------------------------------------------
 
@@ -280,6 +342,26 @@ CREATE TABLE `order_items` (
   `price` decimal(10,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Dumping data for table `order_items`
+--
+
+INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
+(7, 9, 1, 1, '3500.00'),
+(8, 10, 11, 1, '800.00'),
+(9, 11, 11, 1, '800.00'),
+(10, 12, 11, 1, '800.00'),
+(11, 13, 11, 1, '800.00'),
+(12, 14, 11, 1, '800.00'),
+(13, 15, 11, 1, '800.00'),
+(14, 15, 13, 2, '700.00'),
+(15, 16, 11, 1, '800.00'),
+(16, 17, 14, 11, '900.00'),
+(17, 17, 16, 3, '2500.00'),
+(18, 17, 17, 7, '750.00'),
+(19, 17, 18, 3, '900.00'),
+(20, 18, 1, 2, '500.00');
+
 -- --------------------------------------------------------
 
 --
@@ -295,6 +377,21 @@ CREATE TABLE `payments` (
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`id`, `customer_id`, `order_id`, `image`, `amount`, `status`, `created_at`) VALUES
+(12, 2, 9, '21f3e0c6c2e9cac2b3d65d422d897cfe', '3500.00', 'approved', '2025-08-02 17:10:36'),
+(13, 2, 9, '827c249be4c6c215676c385377270149', '3500.00', 'approved', '2025-08-03 03:09:47'),
+(14, 2, 11, '0fe80518ec6686e9ab842447a734d4ea', '800.00', 'approved', '2025-08-03 08:35:14'),
+(15, 2, 14, '688b58a11ee49d4aec1ae4fe25939953', '800.00', 'approved', '2025-08-03 09:13:05'),
+(16, 5, 15, 'c2a85a4a7af39fd913d69562034b3676', '2200.00', 'approved', '2025-08-03 10:01:10'),
+(17, 2, 16, '90537ede7dbd2f953955d2fcc7580c27', '800.00', 'approved', '2025-08-03 11:07:05'),
+(18, 2, 16, 'c691cdb404e24a79784ed5e8eecff567', '800.00', 'approved', '2025-08-03 11:11:34'),
+(19, 6, 17, '3bf7372a22520272bf1293f2765ebf3d', '25350.00', 'approved', '2025-08-04 02:42:22'),
+(20, 2, 18, 'ed1ca0ed431682cc25f4edd95cdad273', '1000.00', 'approved', '2025-08-16 07:57:26');
 
 -- --------------------------------------------------------
 
@@ -322,17 +419,21 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `description`, `category_id`, `price`, `quantity`, `image_url`, `status`, `created_at`, `updated_at`, `product_code`, `color`) VALUES
-(1, 'ประตูบานเลื่อนอลูมิเนียม', 'ประตูอลูมิเนียมแบบบานเลื่อนพร้อมกระจกนิรภัย', 2, '3500.00', 10, 'uploads/products/slide_door.jpg', 'active', '2025-07-21 14:51:52', '2025-07-22 09:29:16', 'P0001', 'เงิน'),
-(2, 'หน้าต่างบานเปิด', 'หน้าต่างอลูมิเนียมบานเปิดคุณภาพสูง', 1, '2200.00', 15, 'uploads/products/window_open.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0002', 'ดำ'),
-(3, 'ฉากกั้นห้องกระจก', 'ฉากกระจกอลูมิเนียมสำหรับแบ่งพื้นที่ภายใน', 1, '4500.00', 5, 'uploads/products/partition.jpg', 'inactive', '2025-07-21 14:51:52', '2025-07-22 09:30:14', 'P0003', 'ใส'),
-(4, 'มุ้งลวดบานเลื่อน', 'มุ้งลวดแบบเลื่อนสำหรับประตูหรือหน้าต่าง', 3, '800.00', 20, 'uploads/products/mosquito_net.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0004', 'ขาว'),
-(5, 'กระจกเทมเปอร์ 8 มม.', 'กระจกนิรภัยความหนา 8 มิลลิเมตร', 4, '1500.00', 30, 'uploads/products/temp_glass.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0005', 'ใส'),
-(6, 'กรอบอลูมิเนียมสีชา', 'กรอบหน้าต่าง/ประตูอลูมิเนียมสีชา', 1, '1200.00', 25, 'uploads/products/al_frame_bronze.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0006', 'ชา'),
-(7, 'กระจกฝ้า', 'กระจกฝ้าสำหรับห้องน้ำหรือห้องประชุม', 4, '1800.00', 10, 'uploads/products/frosted_glass.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0007', 'ฝ้า'),
-(8, 'ประตูบานสวิง', 'ประตูอลูมิเนียมแบบบานสวิงสำหรับห้องต่างๆ', 1, '3200.00', 7, 'uploads/products/swing_door.jpg', 'inactive', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0008', 'ดำ'),
-(9, 'ราวกันตกกระจก', 'ราวกันตกพร้อมกระจกนิรภัยเหมาะสำหรับระเบียง', 2, '6800.00', 4, 'uploads/products/railing.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0009', 'ใส'),
-(10, 'ประตูบานเฟี้ยม', 'ประตูบานเฟี้ยมอลูมิเนียมแบบพับเก็บได้', 1, '5500.00', 6, 'uploads/products/folding_door.jpg', 'active', '2025-07-21 14:51:52', '2025-07-21 14:51:52', 'P0010', 'ขาว'),
-(11, 'มุ้งสีขาว', '-', 6, '800.00', 6, '/uploads/products/1753774633580-258389718.png', 'active', '2025-07-29 07:37:13', '2025-07-29 07:48:43', 'P00011', NULL);
+(1, 'หน้าต่างมุ้งสีอบขาว', '-', 6, '500.00', 1, '/uploads/products/1755243843772-201885004.png', 'active', '2025-08-15 07:44:03', '2025-08-15 07:44:03', 'PWMWX-001', NULL),
+(2, 'หน้าต่างอลูมิเนียมสีอบขาว', '-', 2, '3500.00', 1, '/uploads/products/1755244182369-572932768.jpg', 'active', '2025-08-15 07:49:42', '2025-08-15 07:49:42', 'PWWC-001', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_bom`
+--
+
+CREATE TABLE `product_bom` (
+  `id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `material_id` int(11) NOT NULL,
+  `quantity_per_unit` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -360,6 +461,66 @@ CREATE TABLE `product_ratings` (
   `rating` tinyint(4) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `product_ratings`
+--
+
+INSERT INTO `product_ratings` (`id`, `customer_id`, `product_id`, `rating`, `created_at`, `updated_at`) VALUES
+(1, 2, 1, 1, '2025-08-01 17:01:27', '2025-08-03 02:44:09'),
+(2, 2, 2, 1, '2025-08-02 14:57:18', '2025-08-03 02:44:02'),
+(3, 2, 11, 5, '2025-08-03 07:24:02', '2025-08-03 07:24:02'),
+(4, 5, 11, 5, '2025-08-03 09:43:51', '2025-08-03 09:43:51'),
+(5, 6, 15, 5, '2025-08-04 02:29:34', '2025-08-04 02:29:34');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotations`
+--
+
+CREATE TABLE `quotations` (
+  `id` int(11) NOT NULL,
+  `quotation_number` varchar(50) NOT NULL,
+  `customer_name` varchar(255) NOT NULL,
+  `customer_address` text,
+  `customer_phone` varchar(50) DEFAULT NULL,
+  `total` decimal(10,2) DEFAULT '0.00',
+  `vat` decimal(10,2) DEFAULT '0.00',
+  `grand_total` decimal(10,2) DEFAULT '0.00',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotation_items`
+--
+
+CREATE TABLE `quotation_items` (
+  `id` int(11) NOT NULL,
+  `quotation_id` int(11) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `quantity` decimal(10,2) NOT NULL,
+  `unit_price` decimal(10,2) NOT NULL,
+  `total` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reports`
+--
+
+CREATE TABLE `reports` (
+  `id` int(11) NOT NULL,
+  `report_type` enum('sales','material_usage') NOT NULL,
+  `reference_id` int(11) DEFAULT NULL,
+  `report_date` date NOT NULL,
+  `details` text,
+  `total` decimal(10,2) DEFAULT '0.00',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -434,6 +595,12 @@ ALTER TABLE `favorites`
   ADD KEY `product_id` (`product_id`);
 
 --
+-- Indexes for table `inbox`
+--
+ALTER TABLE `inbox`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `knex_migrations`
 --
 ALTER TABLE `knex_migrations`
@@ -446,17 +613,29 @@ ALTER TABLE `knex_migrations_lock`
   ADD PRIMARY KEY (`index`);
 
 --
--- Indexes for table `likes`
+-- Indexes for table `materials`
 --
-ALTER TABLE `likes`
+ALTER TABLE `materials`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `customer_id` (`customer_id`,`product_id`),
-  ADD KEY `product_id` (`product_id`);
+  ADD UNIQUE KEY `code` (`code`);
+
+--
+-- Indexes for table `material_usage`
+--
+ALTER TABLE `material_usage`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `material_id` (`material_id`);
 
 --
 -- Indexes for table `messages`
 --
 ALTER TABLE `messages`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -497,6 +676,13 @@ ALTER TABLE `products`
   ADD KEY `fk_category` (`category_id`);
 
 --
+-- Indexes for table `product_bom`
+--
+ALTER TABLE `product_bom`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `material_id` (`material_id`);
+
+--
 -- Indexes for table `product_colors`
 --
 ALTER TABLE `product_colors`
@@ -509,6 +695,26 @@ ALTER TABLE `product_colors`
 ALTER TABLE `product_ratings`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_rating` (`customer_id`,`product_id`);
+
+--
+-- Indexes for table `quotations`
+--
+ALTER TABLE `quotations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `quotation_number` (`quotation_number`);
+
+--
+-- Indexes for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `quotation_id` (`quotation_id`);
+
+--
+-- Indexes for table `reports`
+--
+ALTER TABLE `reports`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `stocks`
@@ -542,13 +748,19 @@ ALTER TABLE `comments`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `favorites`
 --
 ALTER TABLE `favorites`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `inbox`
+--
+ALTER TABLE `inbox`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `knex_migrations`
@@ -563,22 +775,34 @@ ALTER TABLE `knex_migrations_lock`
   MODIFY `index` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `likes`
+-- AUTO_INCREMENT for table `materials`
 --
-ALTER TABLE `likes`
+ALTER TABLE `materials`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `material_usage`
+--
+ALTER TABLE `material_usage`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `order_custom_details`
@@ -590,19 +814,25 @@ ALTER TABLE `order_custom_details`
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `product_bom`
+--
+ALTER TABLE `product_bom`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `product_colors`
@@ -614,6 +844,24 @@ ALTER TABLE `product_colors`
 -- AUTO_INCREMENT for table `product_ratings`
 --
 ALTER TABLE `product_ratings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `quotations`
+--
+ALTER TABLE `quotations`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `reports`
+--
+ALTER TABLE `reports`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -642,12 +890,10 @@ ALTER TABLE `favorites`
   ADD CONSTRAINT `favorites_ibfk_3` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`);
 
 --
--- Constraints for table `likes`
+-- Constraints for table `material_usage`
 --
-ALTER TABLE `likes`
-  ADD CONSTRAINT `likes_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `likes_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `likes_ibfk_3` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`);
+ALTER TABLE `material_usage`
+  ADD CONSTRAINT `material_usage_ibfk_1` FOREIGN KEY (`material_id`) REFERENCES `materials` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `orders`
@@ -676,10 +922,22 @@ ALTER TABLE `products`
   ADD CONSTRAINT `fk_category` FOREIGN KEY (`category_id`) REFERENCES `category` (`category_id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `product_bom`
+--
+ALTER TABLE `product_bom`
+  ADD CONSTRAINT `product_bom_ibfk_1` FOREIGN KEY (`material_id`) REFERENCES `materials` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `product_colors`
 --
 ALTER TABLE `product_colors`
   ADD CONSTRAINT `product_colors_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+--
+-- Constraints for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  ADD CONSTRAINT `quotation_items_ibfk_1` FOREIGN KEY (`quotation_id`) REFERENCES `quotations` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -51,6 +51,7 @@ exports.getAllCustomers = async (req, res) => {
 };
 
 
+
 // ลบข้อมูลลูกค้า
 exports.deleteCustomer = async (req, res) => {
   const { id } = req.params;
@@ -75,6 +76,34 @@ exports.changeCustomerStatus = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+// ลบโปรไฟล์ลูกค้า (และไฟล์รูปโปรไฟล์ถ้ามี)
+exports.deleteCustomerProfile = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // ดึงข้อมูลลูกค้าเพื่อเช็ค profile_picture
+    const user = await db('customers').where({ id }).first();
+    if (!user) {
+      return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+    }
+
+    // ลบไฟล์รูปโปรไฟล์ถ้ามี
+    if (user.profile_picture) {
+      const filePath = path.join(__dirname, '..', 'public', user.profile_picture);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch (err) { /* ignore */ }
+      }
+    }
+
+    // ลบข้อมูลลูกค้า
+    await db('customers').where({ id }).del();
+    res.status(200).json({ message: 'ลบบัญชีผู้ใช้สำเร็จ' });
+  } catch (error) {
+    console.error('Error deleting customer profile:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบบัญชี' });
+  }
+};
+
 
 // อัปเดตข้อมูลลูกค้าทั่วไป
 exports.updateCustomer = async (req, res) => {

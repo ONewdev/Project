@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -13,11 +14,12 @@ const categoryRouter = require('./routes/categories');
 const ordersRouter = require('./routes/orders'); 
 const stockRouter = require('./routes/stocks'); 
 const interactionRoutes = require('./routes/interactions'); 
-const messageRoutes = require('./routes/messages');
 const statsRoutes = require('./routes/stats');
 const paymentRoutes = require('./routes/payment');
 const paymentsRoutes = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
+const chatRoutes = require('./routes/chat');
+const inboxRoutes = require('./routes/inbox');
 
 
 
@@ -50,12 +52,15 @@ app.use('/api/categories', categoryRouter);
 app.use('/api/orders', ordersRouter); 
 app.use('/api/stocks', stockRouter);
 app.use('/api/interactions', interactionRoutes); 
-app.use('/api/messages', messageRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/payment', paymentRoutes);
-app.use('/api/customers/notifications', notificationsRoutes);
 
+app.use('/api/customers/notifications', notificationsRoutes);
+app.use('/api/messages', chatRoutes);
+app.use('/api/inbox', inboxRoutes);
+// Serve static files (ภาพ) จาก public/uploads
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 // --- Socket.io ---
 const http = require('http');
 const { Server } = require('socket.io');
@@ -70,8 +75,8 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
   socket.on('chat message', (msg) => {
-    // broadcast to all except sender
-    socket.broadcast.emit('chat message', { text: msg });
+    // broadcast ข้อมูลจริงที่ user ส่งมา (msg)
+    socket.broadcast.emit('chat message', msg);
   });
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);

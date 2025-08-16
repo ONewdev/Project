@@ -6,6 +6,7 @@ import { FaBars } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const menuItems = [
+  { to: '/users/profile', icon: '👤', label: 'โปรไฟล์' },
   { to: '/users/favorite', icon: '❤️', label: 'รายการโปรด' },
   { to: '/users/orders', icon: '🛒', label: 'คำสั่งซื้อของฉัน' },
   { to: '/users/notifications', icon: '🔔', label: 'แจ้งเตือน' },
@@ -13,6 +14,7 @@ const menuItems = [
 
 export default function SidebarProflie() {
   const navigate = useNavigate();
+
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState({ name: 'Guest', email: '', profile_picture: '' });
   const host = import.meta.env.VITE_HOST;
@@ -80,7 +82,7 @@ export default function SidebarProflie() {
     });
   };
 
-  const toggleSidebar = () => setCollapsed(!collapsed);
+  
 
   // ตรวจสอบว่า user มีข้อมูลหรือไม่
   const isLoggedIn = user && user.id;
@@ -100,15 +102,11 @@ export default function SidebarProflie() {
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
         {!collapsed && <h5 style={{ fontWeight: 700, letterSpacing: 1 }}>เมนูผู้ใช้</h5>}
-        <button 
-          onClick={toggleSidebar} 
-          className="btn btn-sm btn-outline-success border-0"
-          title={collapsed ? 'ขยายเมนู' : 'ย่อเมนู'}
-        >
+        <button onClick={() => setCollapsed(!collapsed)} className="btn btn-sm btn-outline-success border-0">
           <FaBars />
         </button>
       </div>
-      
+
       <div className="d-flex flex-column align-items-center mb-4">
         <img
           src={user.profile_picture ? `${host}${user.profile_picture}` : '/images/655fc323-6c03-4394-ba95-5280da436298.jpg'}

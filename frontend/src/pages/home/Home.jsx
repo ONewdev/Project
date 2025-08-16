@@ -30,7 +30,10 @@ export default function Home() {
             <button className="px-8 py-4 bg-white text-green-700 font-semibold rounded-lg hover:bg-green-100 transition duration-300">
               โทรปรึกษา 02-xxx-xxxx
             </button>
-            <button className="px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-green-700 transition duration-300">
+            <button
+              className="px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-green-700 transition duration-300"
+              onClick={() => navigate('/contact')}
+            >
               ส่งข้อความหาเรา
             </button>
           </div>

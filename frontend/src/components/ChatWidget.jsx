@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { sendMessage, fetchMessages } from '../services/chatService';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
 
@@ -30,11 +32,26 @@ const ChatWidget = () => {
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !user) return;
+    // ดึงข้อความเก่าจากฐานข้อมูล
+    fetchMessages(user.id, 1).then((msgs) => {
+      // แปลงข้อความให้รู้ว่าใครเป็นผู้ส่ง
+      setMessages(msgs.map(m => ({
+        self: m.sender_id === user.id,
+        text: m.message
+      })));
+    });
+    // เชื่อมต่อ socket
     if (!socketRef.current) {
       socketRef.current = io(SOCKET_URL);
       socketRef.current.on('chat message', (msg) => {
-        setMessages((prev) => [...prev, msg]);
+        // ถ้าเป็นข้อความที่เกี่ยวกับ user นี้เท่านั้น
+        if (msg.userId === user.id || msg.userId === 1) {
+          setMessages((prev) => [...prev, {
+            self: msg.userId === user.id,
+            text: msg.text
+          }]);
+        }
       });
     }
     return () => {
@@ -43,7 +60,7 @@ const ChatWidget = () => {
         socketRef.current = null;
       }
     };
-  }, [open]);
+  }, [open, user]);
 
   useEffect(() => {
     if (open && chatEndRef.current) {
@@ -51,19 +68,23 @@ const ChatWidget = () => {
     }
   }, [messages, open]);
 
-  const sendMessage = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (input.trim() && socketRef.current && user) {
+      // ส่งข้อความไปที่ฐานข้อมูลก่อน
+      const msg = await sendMessage({ sender_id: user.id, receiver_id: 1, message: input });
+      // emit ผ่าน socket.io เพื่อแจ้ง admin
       socketRef.current.emit('chat message', {
-        text: input,
+        text: msg.message,
         userId: user.id,
         username: user.username || user.name || 'User',
       });
-      setMessages((prev) => [...prev, { self: true, text: input }]);
+      setMessages((prev) => [...prev, { self: true, text: msg.message }]);
       setInput('');
     }
   };
 
+  // แสดงเฉพาะเมื่อ user login
   if (!user) return null;
 
   return (
@@ -83,7 +104,7 @@ const ChatWidget = () => {
             ))}
             <div ref={chatEndRef} />
           </div>
-          <form onSubmit={sendMessage} className="flex gap-2">
+          <form onSubmit={handleSend} className="flex gap-2">
             <input
               className="flex-1 border border-green-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-400 outline-none"
               value={input}
@@ -95,13 +116,16 @@ const ChatWidget = () => {
           </form>
         </div>
       )}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition duration-300"
-        aria-label="ติดต่อแชท"
-      >
-        💬
-      </button>
+      {/* ปุ่มเปิดแชทจะไม่แสดงถ้าไม่ได้ login */}
+      {user && (
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition duration-300"
+          aria-label="ติดต่อแชท"
+        >
+          💬
+        </button>
+      )}
     </div>
   );
 };

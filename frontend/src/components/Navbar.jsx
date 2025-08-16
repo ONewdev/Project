@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { ShoppingCart, UserCircle, Bell } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 // Assuming you have a CSS file for additional styles
 
 export default function Navbar() {
@@ -9,7 +9,10 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const host = import.meta.env.VITE_HOST;
   const navigate = useNavigate();
+  const location = useLocation();
   const [cartCount, setCartCount] = useState(0);
+  const [showCartPopup, setShowCartPopup] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
 
 
   // Load Google Fonts for Thai language support
@@ -51,8 +54,9 @@ useEffect(() => {
     } else {
       cartKey = 'cart_guest';
     }
-    const cartItems = JSON.parse(localStorage.getItem(cartKey)) || [];
-    const totalItems = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const items = JSON.parse(localStorage.getItem(cartKey)) || [];
+    setCartItems(items);
+    const totalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
     setCartCount(totalItems);
   };
 
@@ -100,8 +104,8 @@ useEffect(() => {
               <Link
                 key={to}
                 to={to}
-                className="font-semibold transition-colors duration-200"
-                style={{ color: '#16a34a', fontFamily: "'Prompt', sans-serif", textDecoration: 'none' }}
+                className={`font-semibold transition-colors duration-200 px-2 py-1 rounded ${location.pathname === to ? 'bg-green-600 text-white' : ''}`}
+                style={{ color: location.pathname === to ? undefined : '#16a34a', fontFamily: "'Prompt', sans-serif", textDecoration: 'none' }}
               >
                 {label}
               </Link>
@@ -110,19 +114,42 @@ useEffect(() => {
           <div className="flex items-center space-x-4">
             {/* Shopping Cart Icon: แสดงเฉพาะเมื่อ login */}
             {user && (
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 transition relative"
-                title="ตะกร้าสินค้า"
-                onClick={() => navigate('/users/orders')}
-                aria-label="ตะกร้าสินค้า"
-              >
-                <ShoppingCart className="w-7 h-7 text-green-700" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartCount}
-                  </span>
+              <div className="relative" onMouseEnter={() => setShowCartPopup(true)} onMouseLeave={() => setShowCartPopup(false)}>
+                <button
+                  className="p-2 rounded-full hover:bg-gray-100 transition relative"
+                  title="ตะกร้าสินค้า"
+                  onClick={() => navigate('/users/cart')}
+                  aria-label="ตะกร้าสินค้า"
+                >
+                  <ShoppingCart className="w-7 h-7 text-green-700" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </button>
+                {/* Cart Popup */}
+                {showCartPopup && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-lg border border-gray-200 z-50 animate-fade-in">
+                    <div className="p-3">
+                      <div className="font-bold text-green-700 mb-2">สินค้าในตะกร้า</div>
+                      {cartItems.length === 0 ? (
+                        <div className="text-gray-400 text-sm">ไม่มีสินค้าในตะกร้า</div>
+                      ) : (
+                        <ul className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                          {cartItems.map((item, idx) => (
+                            <li key={idx} className="py-2 flex justify-between items-center">
+                              <span className="font-medium text-gray-700">{item.name}</span>
+                              <span className="text-xs text-gray-500">x{item.quantity}</span>
+                              <span className="text-green-700 font-bold">฿{Number(item.price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
             )}
             {/* Bell Notification Icon: แสดงเฉพาะเมื่อ login */}
             {user && (

@@ -1,37 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { FaBars } from 'react-icons/fa';
+import { FaBars, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
-const menuItems = [
-  { to: '/admin/dashboard', icon: '📈', label: 'สถิติ' },
-  { to: '/admin/admins', icon: '🧑‍💼', label: 'จัดการแอดมิน' }, // เพิ่มหน้าแอดมิน
-  { to: '/admin/customers', icon: '👥', label: 'จัดการข้อมูลสมาชิก' },
-  { to: '/admin/products', icon: '📦', label: 'จัดการสินค้า/บริการ' },
-  { to: '/admin/categories', icon: '🗂️', label: 'จัดการหมวดหมู่สินค้า' }, // เพิ่มหมวดหมู่สินค้า
-  { to: '/admin/orders', icon: '🛒', label: 'จัดการคำสั่งซื้อ' },
-  { to: '/admin/payment-check', icon: '💳', label: 'ตรวจสอบการชำระเงิน' }, // เพิ่มเมนูตรวจสอบการชำระเงิน
-  { to: '/admin/chat', icon: '💬', label: 'ข้อความลูกค้า' }, // เพิ่มเมนูข้อความลูกค้า
-  { to: '/admin/contact', icon: '📞', label: 'ข้อมูลร้านค้า' },
-  { to: '/admin/stock', icon: '📦', label: 'สต็อกวัสดุ' },
-  { to: '/admin/sales', icon: '💰', label: 'จัดการข้อมูลการขาย' },
-  { to: '/admin/finance', icon: '💳', label: 'ฐานการเงิน' }, // เพิ่มฐานการเงิน
-  { to: '/admin/quotation', icon: '📝', label: 'ใบเสนอราคา' },
-  { to: '/admin/report', icon: '📄', label: 'ออกรายงาน' },
-  { to: '/admin/withdraw', icon: '📤', label: 'เบิกวัสดุ' },
-  { to: '/admin/setting', icon: '⚙️', label: 'ตั้งค่า' },
-];
-
-export default function Sidebar() {
+export default function SidebarAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState({
+    users: false,
+    products: false,
+    orders: false,
+  });
 
   useEffect(() => {
     if (!document.getElementById('kanit-font')) {
       const link = document.createElement('link');
       link.id = 'kanit-font';
-      link.href = 'https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap';
+      link.href =
+        'https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap';
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
@@ -46,7 +34,7 @@ export default function Sidebar() {
       confirmButtonColor: '#16a34a',
       cancelButtonColor: '#d33',
       confirmButtonText: 'ใช่, ออกจากระบบ',
-      cancelButtonText: 'ยกเลิก'
+      cancelButtonText: 'ยกเลิก',
     }).then((result) => {
       if (result.isConfirmed) {
         localStorage.removeItem('admin_token');
@@ -55,7 +43,6 @@ export default function Sidebar() {
           title: 'ออกจากระบบแล้ว',
           showConfirmButton: false,
           timer: 1500,
-          confirmButtonColor: '#16a34a'
         }).then(() => {
           navigate('/admin/login');
         });
@@ -64,6 +51,21 @@ export default function Sidebar() {
   };
 
   const toggleSidebar = () => setCollapsed(!collapsed);
+  const isActive = (path) => location.pathname === path;
+
+  const DropdownToggle = ({ label, icon, name }) => (
+    <button
+      className={`btn btn-toggle align-items-center w-100 text-start ${openDropdown[name] ? 'active' : ''}`}
+      onClick={() => setOpenDropdown((prev) => ({ ...prev, [name]: !prev[name] }))}
+    >
+      {icon} {!collapsed && label}
+      {!collapsed && (
+        <span style={{ float: 'right', transition: 'transform 0.3s', transform: openDropdown[name] ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <FaChevronDown size={12} />
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <div
@@ -80,40 +82,136 @@ export default function Sidebar() {
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        {!collapsed && <h5 style={{ fontWeight: 700, letterSpacing: 1 }}>Admin Panel</h5>}
+        {!collapsed && <h5 style={{ fontWeight: 700 }}>Admin Panel</h5>}
         <button onClick={toggleSidebar} className="btn btn-sm btn-outline-light border-0">
           <FaBars />
         </button>
       </div>
+
       <ul className="nav flex-column">
-        {menuItems.map((item, idx) => (
-          <li className="nav-item" key={idx}>
-            <Link
-              to={item.to}
-              className="nav-link text-white sidebar-link"
-              style={{ fontWeight: 500 }}
-            >
-              {item.icon} {!collapsed && item.label}
-            </Link>
-          </li>
-        ))}
+        {/* Dashboard */}
         <li className="nav-item">
-          <button
-            onClick={handleLogout}
-            className="btn btn-link nav-link text-white text-start sidebar-link"
-            style={{ fontWeight: 500 }}
+          <Link
+            to="/admin/dashboard"
+            className={`nav-link text-white ${isActive('/admin/dashboard') ? 'active' : ''}`}
           >
+            📈 {!collapsed && 'สถิติ'}
+          </Link>
+        </li>
+
+        {/* ผู้ใช้งาน */}
+        <li className="nav-item">
+          <DropdownToggle label="ผู้ใช้งาน" icon="👥" name="users" />
+          {openDropdown.users && (
+            <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li>
+                <Link to="/admin/admins" className={`nav-link text-white ps-4 ${isActive('/admin/admins') ? 'active' : ''}`}>
+                  🧑‍💼 แอดมิน
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/customers" className={`nav-link text-white ps-4 ${isActive('/admin/customers') ? 'active' : ''}`}>
+                  👥 สมาชิก
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/chat" className={`nav-link text-white ps-4 ${isActive('/admin/chat') ? 'active' : ''}`}>
+                  💬 ข้อความลูกค้า
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/inbox" className={`nav-link text-white ps-4 ${isActive('/admin/inbox') ? 'active' : ''}`}>
+                  📥 กล่องข้อความ
+                </Link>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* สินค้า */}
+        <li className="nav-item">
+          <DropdownToggle label="สินค้า & หมวดหมู่" icon="📦" name="products" />
+          {openDropdown.products && (
+            <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li>
+                <Link to="/admin/products" className={`nav-link text-white ps-4 ${isActive('/admin/products') ? 'active' : ''}`}>
+                  📦 สินค้า/บริการ
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/categories" className={`nav-link text-white ps-4 ${isActive('/admin/categories') ? 'active' : ''}`}>
+                  🗂️ หมวดหมู่สินค้า
+                </Link>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* คำสั่งซื้อ */}
+        <li className="nav-item">
+          <DropdownToggle label="คำสั่งซื้อ" icon="🛒" name="orders" />
+          {openDropdown.orders && (
+            <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li>
+                <Link to="/admin/orders" className={`nav-link text-white ps-4 ${isActive('/admin/orders') ? 'active' : ''}`}>
+                  🛒 จัดการคำสั่งซื้อ
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/payment-check" className={`nav-link text-white ps-4 ${isActive('/admin/payment-check') ? 'active' : ''}`}>
+                  💳 ตรวจสอบการชำระเงิน
+                </Link>
+              </li>
+            </ul>
+          )}
+        </li>
+
+        {/* อื่นๆ */}
+        <li className="nav-item">
+          <Link to="/admin/contact" className={`nav-link text-white ${isActive('/admin/contact') ? 'active' : ''}`}>
+            📞 {!collapsed && 'ข้อมูลร้านค้า'}
+          </Link>
+        </li>
+
+        {/* Logout */}
+        <li className="nav-item mt-3">
+          <button onClick={handleLogout} className="btn btn-link nav-link text-white text-start">
             🔓 {!collapsed && 'ออกจากระบบ'}
           </button>
         </li>
       </ul>
+
       <style>{`
-        .sidebar-link:hover, .sidebar-link:focus {
-          background: rgba(255,255,255,0.18);
-          color: #fff !important;
-          border-radius: 8px;
-          text-decoration: none;
-        }
+        .btn-toggle {
+    background: transparent;
+    border: none;
+    color: white;
+    font-weight: 500;
+  }
+  .btn-toggle:hover,
+  .btn-toggle.active {
+    background: rgba(255,255,255,0.18);
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  /* ลิงก์หลัก */
+  
+  .nav-link.active {
+    background: rgba(255,255,255,0.25);
+    border-radius: 8px;
+    font-weight: 600;
+    color: white !important;
+  }
+  /* ลิงก์ในหัวข้อย่อย */
+  .btn-toggle-nav .nav-link {
+    color: white;
+  }
+  
+  .btn-toggle-nav .nav-link.active {
+    background: rgba(255,255,255,0.6);
+    color: black !important;
+    font-weight: 600;
+  }
       `}</style>
     </div>
   );

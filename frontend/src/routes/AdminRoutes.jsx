@@ -16,6 +16,7 @@ import Quotation from "../pages/admin/Quotation";
 import Report from "../pages/admin/Report";
 import Withdraw from "../pages/admin/Withdraw";
 import Setting from "../pages/admin/Setting";
+import Inbox from "../pages/admin/Inbox";
 
 import Login from "../pages/admin/Login";
 import PrivateRoute from "../utils/PrivateRoute";
@@ -37,6 +38,7 @@ export default function AdminRoutes() {
           <Route path="orders" element={<Orders />} />
           <Route path="payment-check" element={<PaymentCheck />} /> 
           <Route path="chat" element={<ChatAdmin />} /> 
+          <Route path="inbox" element={<Inbox />} />
           <Route path="contact" element={<Contact />} />
           <Route path="stock" element={<Stock />} />
           <Route path="finance" element={<Finance />} /> 

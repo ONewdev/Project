@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { removeFavorite } from '../../services/likeFavoriteService';
 import { FaHeart, FaTrash } from 'react-icons/fa';
+import Swal from 'sweetalert2';
 
 function Favorite() {
   const host = import.meta.env.VITE_HOST;
@@ -36,15 +37,24 @@ function Favorite() {
 
   const handleRemoveFavorite = async (productId) => {
     if (!user) return;
-    
     try {
       await removeFavorite(user.id, productId);
       // รีเฟรชรายการหลังจากลบ
       fetchFavorites();
-      alert('ลบออกจากรายการโปรดแล้ว');
+      Swal.fire({
+        icon: 'success',
+        title: 'ลบออกจากรายการโปรดแล้ว',
+        showConfirmButton: false,
+        timer: 1200,
+        confirmButtonColor: '#16a34a',
+      });
     } catch (error) {
       console.error('Error removing favorite:', error);
-      alert('เกิดข้อผิดพลาดในการลบรายการโปรด');
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาดในการลบรายการโปรด',
+        confirmButtonColor: '#16a34a',
+      });
     }
   };
 
