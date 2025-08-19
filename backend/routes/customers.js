@@ -49,5 +49,7 @@ router.post('/register', customerController.registerCustomer);
 router.get('/:id/favorites', customerController.getCustomerFavorites);
 // ลบโปรไฟล์ลูกค้า (delete account)
 router.delete('/:id/delete', customerController.deleteCustomerProfile);
+// ลบเฉพาะรูปโปรไฟล์ ไม่ลบบัญชี
+router.delete('/:id/profile-picture', customerController.deleteProfilePicture);
 
 module.exports = router;

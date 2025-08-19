@@ -6,7 +6,7 @@ module.exports = {
       host: 'localhost',
       user: 'root',
       password: 'root',
-      database: 'aluminium_test',
+      database: 'aluminium_shop',
     },
   },
 };

@@ -82,7 +82,7 @@ export default function SidebarAdmin() {
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        {!collapsed && <h5 style={{ fontWeight: 700 }}>Admin Panel</h5>}
+        {!collapsed && <h5 style={{ fontWeight: 700 }}>หน้าจัดการข้อมูล</h5>}
         <button onClick={toggleSidebar} className="btn btn-sm btn-outline-light border-0">
           <FaBars />
         </button>
@@ -161,6 +161,32 @@ export default function SidebarAdmin() {
                 <Link to="/admin/payment-check" className={`nav-link text-white ps-4 ${isActive('/admin/payment-check') ? 'active' : ''}`}>
                   💳 ตรวจสอบการชำระเงิน
                 </Link>
+              </li>
+            </ul>
+          )}
+        </li>
+        {/* จัดการข้อมูลร้านค้า */}
+        <li className="nav-item">
+        <DropdownToggle label="จัดการข้อมูลร้านค้า" icon="🏢" name="shop" />
+          {openDropdown.shop && (
+            <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+              <li>
+                <Link to="/admin/finance" className={`nav-link text-white ps-4 ${isActive('/admin/finance') ? 'active' : ''}`}>💰 Finance</Link>
+              </li>
+              <li>
+                <Link to="/admin/quotation" className={`nav-link text-white ps-4 ${isActive('/admin/quotation') ? 'active' : ''}`}>📄 Quotation</Link>
+              </li>
+              <li>
+                <Link to="/admin/report" className={`nav-link text-white ps-4 ${isActive('/admin/report') ? 'active' : ''}`}>📊 Report</Link>
+              </li>
+              <li>
+                <Link to="/admin/sales" className={`nav-link text-white ps-4 ${isActive('/admin/sales') ? 'active' : ''}`}>🛒 Sales</Link>
+              </li>
+              <li>
+                <Link to="/admin/withdraw" className={`nav-link text-white ps-4 ${isActive('/admin/withdraw') ? 'active' : ''}`}>🏦 Withdraw</Link>
+              </li>
+              <li>
+                <Link to="/admin/material" className={`nav-link text-white ps-4 ${isActive('/admin/material') ? 'active' : ''}`}>🧱 Material</Link>
               </li>
             </ul>
           )}

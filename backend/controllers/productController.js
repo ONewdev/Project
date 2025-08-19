@@ -179,31 +179,7 @@ const updateProduct = async (req, res) => {
 
 
 // 4. Delete product
-const deleteProduct = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // ดึง path รูปภาพก่อนลบ
-   const product = await db('products').where({ id }).first();
-if (product && product.image_url) {
-  const imagePath = path.join(__dirname, '..', 'public', product.image_url.replace(/^\/+/, ''));
-  console.log("Image path:", imagePath); // เช็ก path
-
-  if (fs.existsSync(imagePath)) {
-    fs.unlinkSync(imagePath);
-    console.log("Deleted image");
-  } else {
-    console.log("Image not found");
-  }
-}
-    await db('products').where({ id }).del();
-    res.json({ message: 'Product deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting product:', error.message);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
+// (removed)
 // 5. Update only status
 const updateProductStatus = async (req, res) => {
   const { id } = req.params;
@@ -260,7 +236,6 @@ module.exports = {
   getAllProducts,
   addProduct,
   updateProduct,
-  deleteProduct,
   updateProductStatus,
   getProductById
 };

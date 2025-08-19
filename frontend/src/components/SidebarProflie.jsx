@@ -94,15 +94,15 @@ export default function SidebarProflie() {
         width: collapsed ? '70px' : '250px',
         transition: 'width 0.3s',
         position: 'fixed',
-        background: 'linear-gradient(180deg, #bbf7d0 0%, #22c55e 100%)',
+        background: '#dcfce7',
         color: '#166534',
         fontFamily: "'Kanit', sans-serif",
         zIndex: 1000
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        {!collapsed && <h5 style={{ fontWeight: 700, letterSpacing: 1 }}>เมนูผู้ใช้</h5>}
-        <button onClick={() => setCollapsed(!collapsed)} className="btn btn-sm btn-outline-success border-0">
+        {!collapsed && <h5 style={{ fontWeight: 700, letterSpacing: 1, color: '#222' }}>เมนูผู้ใช้</h5>}
+        <button onClick={() => setCollapsed(!collapsed)} className="btn btn-sm border-0" style={{ color: '#222' }}>
           <FaBars />
         </button>
       </div>
@@ -125,11 +125,11 @@ export default function SidebarProflie() {
         />
         {!collapsed && (
           <>
-            <div style={{ fontWeight: 600, textAlign: 'center' }}>
+            <div style={{ fontWeight: 600, textAlign: 'center', color: '#222' }}>
               {isLoggedIn ? user.name : 'ผู้เยี่ยมชม'}
             </div>
             {isLoggedIn && (
-              <div style={{ fontSize: 13, color: '#166534', opacity: 0.8 }}>
+              <div style={{ fontSize: 13, color: '#222', opacity: 0.8 }}>
                 {user.email}
               </div>
             )}

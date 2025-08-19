@@ -9,7 +9,8 @@ export default function ContactAdmin() {
     phone: '',
     email: '',
     open_hours: '',
-    map_url: ''
+    map_url: '',
+    status: 'active'
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +81,7 @@ export default function ContactAdmin() {
         </h2>
 
         <div className="mb-3">
-          <label className="form-label fw-semibold">ที่อยู่</label>
+          <label className="form-label fw-semibold">ชื่อร้านค้า</label>
           <textarea
             name="address"
             value={formData.address}
@@ -137,6 +138,19 @@ export default function ContactAdmin() {
             className="form-control rounded-3"
             placeholder="https://goo.gl/maps/..."
           />
+        </div>
+
+        <div className="mb-4">
+          <label className="form-label fw-semibold">สถานะ</label>
+          <select
+            name="status"
+            value={formData.status || 'active'}
+            onChange={handleChange}
+            className="form-control rounded-3"
+          >
+            <option value="active">เปิดทำการ</option>
+            <option value="inactive">ปิดทำการ</option>
+          </select>
         </div>
 
         <button

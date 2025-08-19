@@ -218,8 +218,12 @@ function Contact() {
                     <div>
                       <h3 className="font-semibold text-green-800">เวลาทำการ</h3>
                       <p className="text-green-700">{contactInfo?.open_hours || 'จันทร์ - ศุกร์: 9:00 - 18:00\nเสาร์: 9:00 - 16:00\nอาทิตย์: ปิด'}</p>
+                      <p className={`${(contactInfo?.status === 'active' || contactInfo?.status === 1 || contactInfo?.status === '1') ? 'text-green-700' : 'text-red-600'}`}>
+                        {(contactInfo?.status === 'active' || contactInfo?.status === 1 || contactInfo?.status === '1') ? 'เปิดทำการ' : 'ปิดทำการ'}
+                      </p>
                     </div>
                   </div>
+                  
                 </div>
               </div>
 

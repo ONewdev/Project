@@ -22,7 +22,7 @@ exports.login = async (req, res) => {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
   } catch (err) {
-    console.error(err);
+    console.error('เข้าสู่ระบบแอดมินไม่สำเร็จ',err.message);
     res.status(500).json({ success: false, message: 'Database error' });
   }
 };

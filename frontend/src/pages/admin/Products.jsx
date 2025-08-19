@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import DataTable from 'react-data-table-component';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaTimes, FaImage, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaTimes, FaImage, FaSearch } from 'react-icons/fa';
 import { useMemo } from 'react';
 
 // Wrap your Modal component with React.memo
@@ -54,7 +54,7 @@ function Products() {
     image: null,
     status: 'active',
   });
-  const [selectedRows, setSelectedRows] = useState([]);
+  
 
   const host = import.meta.env.VITE_HOST || 'http://localhost:3000';
 
@@ -106,71 +106,7 @@ function Products() {
     }
   };
 
-  const handleSelectedRowsChange = ({ selectedRows }) => {
-    setSelectedRows(selectedRows);
-  };
-
-  const handleBulkDelete = () => {
-    if (selectedRows.length === 0) return;
-
-    Swal.fire({
-      title: 'คุณแน่ใจหรือไม่?',
-      text: `ต้องการลบสินค้าทั้งหมด ${selectedRows.length} รายการหรือไม่`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'ใช่, ลบทั้งหมด',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const deletePromises = selectedRows.map((row) =>
-            fetch(`${host}/api/products/${row.id}`, { method: 'DELETE' })
-          );
-          await Promise.all(deletePromises);
-
-          setProducts((prev) => prev.filter((p) => !selectedRows.some((s) => s.id === p.id)));
-          setSelectedRows([]);
-          Swal.fire('ลบแล้ว!', 'สินค้าที่เลือกถูกลบแล้ว', 'success');
-        } catch (error) {
-          console.error('Bulk delete error:', error);
-          Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถลบสินค้าบางรายการได้', 'error');
-        }
-      }
-    });
-  };
-
-  const handleDelete = (id) => {
-    Swal.fire({
-      title: 'คุณแน่ใจหรือไม่?',
-      text: 'คุณต้องการลบสินค้ารายนี้หรือไม่',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'ใช่, ลบเลย',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const response = await fetch(`${host}/api/products/${id}`, {
-            method: 'DELETE',
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to delete product');
-          }
-
-          setProducts((prev) => prev.filter((p) => p.id !== id));
-          Swal.fire('ลบแล้ว!', 'สินค้าได้ถูกลบเรียบร้อยแล้ว', 'success');
-        } catch (error) {
-          console.error('Delete error:', error);
-          Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถลบสินค้าได้', 'error');
-        }
-      }
-    });
-  };
+  
 
   const handleEdit = (id) => {
     const product = products.find((p) => p.id === id);
@@ -421,16 +357,9 @@ function Products() {
           >
             <FaEdit size={14} />
           </button>
-          <button
-            onClick={() => handleDelete(row.id)}
-            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
-            title="ลบ"
-          >
-            <FaTrash size={14} />
-          </button>
         </div>
       ),
-      width: '120px'
+      width: '80px'
     },
   ];
 
@@ -492,15 +421,6 @@ function Products() {
               <FaPlus className="mr-2" size={14} />
               เพิ่มสินค้าใหม่
             </button>
-            {selectedRows.length > 0 && (
-              <button
-                onClick={handleBulkDelete}
-                className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm"
-              >
-                <FaTrash className="mr-2" size={14} />
-                ลบ ({selectedRows.length})
-              </button>
-            )}
           </div>
 
           <div className="relative w-full sm:w-80">
@@ -549,8 +469,6 @@ function Products() {
               customStyles={customStyles}
               highlightOnHover
               pointerOnHover
-              selectableRows
-              onSelectedRowsChange={handleSelectedRowsChange}
             />
           ) : (
             <div className="text-center py-12">

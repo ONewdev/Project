@@ -9,7 +9,7 @@ import Orders from "../pages/admin/Orders";
 import PaymentCheck from "../pages/admin/PaymentCheck"; // New PaymentCheck page
 import ChatAdmin from "../pages/admin/ChatAdmin"; // New ChatAdmin page
 import Contact from "../pages/admin/Contact";
-import Stock from "../pages/admin/Stock";
+import Material from "../pages/admin/Material";
 import Finance from "../pages/admin/Finance"; // New Finance page
 import Sales from "../pages/admin/Sales";
 import Quotation from "../pages/admin/Quotation";
@@ -40,7 +40,7 @@ export default function AdminRoutes() {
           <Route path="chat" element={<ChatAdmin />} /> 
           <Route path="inbox" element={<Inbox />} />
           <Route path="contact" element={<Contact />} />
-          <Route path="stock" element={<Stock />} />
+          <Route path="material" element={<Material/>} />
           <Route path="finance" element={<Finance />} /> 
           <Route path="sales" element={<Sales />} />
           <Route path="quotation" element={<Quotation />} />

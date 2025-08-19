@@ -80,15 +80,7 @@ export default function Register() {
     }
   };
 
-  const getPasswordStrength = (password) => {
-    if (password.length === 0) return { strength: 0, text: '', color: '' };
-    if (password.length < 4) return { strength: 25, text: 'อ่อน', color: 'bg-red-500' };
-    if (password.length < 6) return { strength: 50, text: 'ปานกลาง', color: 'bg-yellow-500' };
-    if (password.length < 8) return { strength: 75, text: 'ดี', color: 'bg-green-400' };
-    return { strength: 100, text: 'แข็งแรง', color: 'bg-green-600' };
-  };
-
-  const passwordStrength = getPasswordStrength(formData.password);
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex items-center justify-center p-4 relative overflow-hidden">
@@ -234,27 +226,6 @@ export default function Register() {
                   )}
                 </button>
               </div>
-              {/* Password Strength Indicator */}
-              {formData.password && (
-                <div className="mt-2">
-                  <div className="flex justify-between text-xs text-green-600 mb-1">
-                    <span>ความแข็งแรงของรหัสผ่าน</span>
-                    <span className={`font-medium ${
-                      passwordStrength.strength < 50 ? 'text-red-500' : 
-                      passwordStrength.strength < 75 ? 'text-yellow-500' : 
-                      passwordStrength.strength < 100 ? 'text-green-400' : 'text-green-600'
-                    }`}>
-                      {passwordStrength.text}
-                    </span>
-                  </div>
-                  <div className="w-full bg-green-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`}
-                      style={{ width: `${passwordStrength.strength}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1 flex items-center">
                   <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -324,26 +295,6 @@ export default function Register() {
               )}
             </div>
 
-            {/* Terms and Conditions */}
-            <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-xl">
-              <input
-                type="checkbox"
-                id="terms"
-                className="mt-1 w-4 h-4 text-green-600 bg-green-100 border-green-300 rounded focus:ring-green-500 focus:ring-2"
-                required
-              />
-              <label htmlFor="terms" className="text-sm text-green-600">
-                ฉันยอมรับ
-                <button type="button" className="text-green-600 hover:text-green-700 mx-1 underline">
-                  เงื่อนไขการใช้งาน
-                </button>
-                และ
-                <button type="button" className="text-green-600 hover:text-green-700 mx-1 underline">
-                  นโยบายความเป็นส่วนตัว
-                </button>
-              </label>
-            </div>
-
             {/* Submit Button */}
             <button
               type="button"
@@ -367,7 +318,7 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="text-green-600 hover:text-green-700 font-medium transition-colors duration-200 hover:underline"
+                className="w-full px-4 py-3 text-green-600 border-2 border-green-500 rounded-xl hover:bg-green-50 hover:border-green-600 transition-all duration-300 font-medium transform hover:scale-[1.02]"
               >
                 เข้าสู่ระบบที่นี่
               </button>

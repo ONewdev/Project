@@ -205,15 +205,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-500">
-          <p>การเข้าสู่ระบบแสดงว่าคุณยอมรับ</p>
-          <div className="space-x-2 mt-1">
-            <button className="text-green-600 hover:text-green-700 transition-colors">เงื่อนไขการใช้งาน</button>
-            <span>และ</span>
-            <button className="text-green-600 hover:text-green-700 transition-colors">นโยบายความเป็นส่วนตัว</button>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

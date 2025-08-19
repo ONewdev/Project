@@ -1,3 +1,4 @@
+
 const db = require('../db'); // <- ได้ instance ของ knex
 const bcrypt = require('bcrypt');
 const multer = require('multer');
@@ -77,6 +78,29 @@ exports.changeCustomerStatus = async (req, res) => {
   }
 };
 
+// ลบเฉพาะรูปโปรไฟล์ ไม่ลบบัญชี
+exports.deleteProfilePicture = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await db('customers').where({ id }).first();
+    if (!user) {
+      return res.status(404).json({ message: 'ไม่พบผู้ใช้งาน' });
+    }
+    if (user.profile_picture) {
+      const filePath = path.join(__dirname, '..', 'public', user.profile_picture);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch (err) { /* ignore */ }
+      }
+      await db('customers').where({ id }).update({ profile_picture: null });
+      return res.status(200).json({ message: 'ลบรูปโปรไฟล์สำเร็จ' });
+    } else {
+      return res.status(400).json({ message: 'ไม่มีรูปโปรไฟล์ให้ลบ' });
+    }
+  } catch (error) {
+    console.error('Error deleting profile picture:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบรูปโปรไฟล์' });
+  }
+};
 // ลบโปรไฟล์ลูกค้า (และไฟล์รูปโปรไฟล์ถ้ามี)
 exports.deleteCustomerProfile = async (req, res) => {
   const { id } = req.params;
@@ -162,7 +186,7 @@ exports.login = async (req, res) => {
       token
     });
   } catch (error) {
-    console.error('Login error:', error.message);
+    console.error('เข้าสู่ระบบไม่สำเร็จ', error.message);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' });
   }
 };

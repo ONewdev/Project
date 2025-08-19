@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Slidebar from '../../components/Slidebar';
+import PopularProducts from '../../components/PopularProducts';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -17,7 +18,9 @@ export default function Home() {
       <div className="w-full bg-gray/80 py-6 shadow text-left pl-10">
         <h1 className="text-3xl md:text-4xl font-bold text-green-700 tracking-wide" style={{ fontFamily: "'Kanit', 'Prompt', sans-serif" }}>หน้าแรก</h1>
       </div>
-      <Slidebar />
+
+  <Slidebar />
+  <PopularProducts />
 
       {/* CTA Section */}
       <section className="py-16 bg-gradient-to-r from-green-600 to-green-700 text-white">
@@ -27,9 +30,7 @@ export default function Home() {
             ปรึกษาฟรี ประเมินราคาฟรี พร้อมให้คำแนะนำจากทีมผู้เชี่ยวชาญ
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-4 bg-white text-green-700 font-semibold rounded-lg hover:bg-green-100 transition duration-300">
-              โทรปรึกษา 02-xxx-xxxx
-            </button>
+           
             <button
               className="px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-green-700 transition duration-300"
               onClick={() => navigate('/contact')}
@@ -37,6 +38,7 @@ export default function Home() {
               ส่งข้อความหาเรา
             </button>
           </div>
+
         </div>
       </section>
 
