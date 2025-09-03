@@ -1,434 +1,373 @@
-import React, { useState } from 'react';
-import { Upload, Calculator, ShoppingCart, Eye, Ruler, Palette } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { calculatePrice } from '../utils/pricing';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import { useAuth } from '../context/AuthContext';
+const host = import.meta.env.VITE_HOST || '';
 
-export default function CustomMirrorOrder() {
+
+function toMeters(value, unit) {
+  const n = parseFloat(String(value || ''));
+  if (isNaN(n) || n <= 0) return 0;
+  return unit === 'cm' ? n / 100 : n;
+}
+
+function Custom() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const { user } = useAuth();
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState({
+    category: '',
     width: '',
     height: '',
-    thickness: '4',
-    shape: 'rectangle',
-    frameType: 'aluminum',
-    frameColor: 'silver',
-    frameWidth: '20',
-    mirrorType: 'standard',
-    edgeType: 'polished',
-    mounting: 'wall',
+    unit: 'cm',
+    color: '',
     quantity: 1,
-    specialRequests: '',
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-    address: ''
+    details: '',
+    hasScreen: false,
+    roundFrame: false,
+    swingType: 'บานเดี่ยว',
+    mode: 'มาตรฐาน',
+    fixedLeftM2: '',
+    fixedRightM2: '',
   });
-
-  const [uploadedImage, setUploadedImage] = useState(null);
   const [estimatedPrice, setEstimatedPrice] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const shapes = [
-    { value: 'rectangle', label: 'สี่เหลี่ยม', icon: '▭' },
-    { value: 'square', label: 'สี่เหลี่ยมจัตุรัส', icon: '□' },
-    { value: 'circle', label: 'วงกลม', icon: '○' },
-    { value: 'oval', label: 'รูปไข่', icon: '⬭' },
-    { value: 'custom', label: 'รูปทรงพิเศษ', icon: '✦' }
-  ];
+  useEffect(() => {
+    fetch(`${host}/api/categories`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setCategories(data);
+        else if (Array.isArray(data.data)) setCategories(data.data);
+        else if (Array.isArray(data.categories)) setCategories(data.categories);
+        else if (data && typeof data === 'object') {
+          const arr = Object.values(data).find(v => Array.isArray(v));
+          setCategories(arr || []);
+        } else setCategories([]);
+      })
+      .catch(err => { console.error('API /api/categories error:', err); setCategories([]); });
+  }, []);
 
-  const frameTypes = [
-    { value: 'aluminum', label: 'อลูมิเนียม', price: 150 },
-    { value: 'wood', label: 'ไม้', price: 200 },
-    { value: 'plastic', label: 'พลาสติก', price: 80 },
-    { value: 'none', label: 'ไม่ต้องกรอบ', price: 0 }
-  ];
+  const productType =
+    categories.find(c => String(c.category_id) === String(form.category))?.category_name || '';
 
-  const frameColors = [
-    { value: 'silver', label: 'เงิน', color: '#C0C0C0' },
-    { value: 'black', label: 'ดำ', color: '#000000' },
-    { value: 'white', label: 'ขาว', color: '#FFFFFF' },
-    { value: 'gold', label: 'ทอง', color: '#FFD700' },
-    { value: 'bronze', label: 'บรอนซ์', color: '#CD7F32' }
-  ];
+  // parsed สำหรับ pricing.js
+  const parsed = useMemo(() => {
+    const widthM = toMeters(form.width, form.unit);
+    const heightM = toMeters(form.height, form.unit);
+    if (!widthM || !heightM) return null;
+    const widthCm = widthM * 100;
+    const heightCm = heightM * 100;
+    const areaM2 = widthM * heightM;
+    return { widthCm, heightCm, widthM, heightM, areaM2 };
+  }, [form.width, form.height, form.unit]);
 
-  const mirrorTypes = [
-    { value: 'standard', label: 'กระจกธรรมดา', price: 100 },
-    { value: 'antique', label: 'กระจกแอนทีค', price: 180 },
-    { value: 'tinted', label: 'กระจกสี', price: 150 },
-    { value: 'safety', label: 'กระจกนิรภัย', price: 250 }
-  ];
+  const sizeString = useMemo(() => {
+    if (!form.width || !form.height) return '';
+    return `${form.width}x${form.height} ${form.unit}`;
+  }, [form.width, form.height, form.unit]);
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    calculatePrice({ ...formData, [field]: value });
+  const autoEstimated = useMemo(() => {
+    if (!productType) return 0;
+    const input = {
+      type: productType,
+      quantity: Number(form.quantity) || 1,
+      color: form.color,
+      size: sizeString,
+      parsed,
+      hasScreen: form.hasScreen,
+      roundFrame: form.roundFrame,
+      swingType: form.swingType,
+      mode: form.mode,
+      fixedLeftM2: parseFloat(form.fixedLeftM2 || '0') || 0,
+      fixedRightM2: parseFloat(form.fixedRightM2 || '0') || 0,
+    };
+    return calculatePrice(input);
+  }, [productType, form, parsed, sizeString]);
+
+  useEffect(() => setEstimatedPrice(autoEstimated), [autoEstimated]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const calculatePrice = (data) => {
-    const area = (parseFloat(data.width) || 0) * (parseFloat(data.height) || 0) / 10000; // ตร.ม.
-    const frameType = frameTypes.find(f => f.value === data.frameType);
-    const mirrorType = mirrorTypes.find(m => m.value === data.mirrorType);
-    
-    let basePrice = area * 500; // ราคาพื้นฐาน ตร.ม. ละ 500 บาท
-    basePrice += (frameType?.price || 0) * (parseFloat(data.frameWidth) || 0) / 10;
-    basePrice += (mirrorType?.price || 0) * area;
-    
-    if (data.shape === 'custom') basePrice *= 1.5;
-    if (data.edgeType === 'beveled') basePrice *= 1.2;
-    
-    setEstimatedPrice(Math.round(basePrice * data.quantity));
+  const clampQty = (q) => Math.max(1, Number.isFinite(q) ? Math.floor(q) : 1);
+  const handleQty = (delta) => {
+    setForm(prev => ({ ...prev, quantity: clampQty((Number(prev.quantity) || 1) + delta) }));
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => setUploadedImage(e.target.result);
-      reader.readAsDataURL(file);
+  const handleEstimate = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${host}/api/custom/estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, productType, size: sizeString, parsed }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEstimatedPrice(data.estimatedPrice ?? autoEstimated);
+      } else {
+        setEstimatedPrice(autoEstimated);
+      }
+    } catch {
+      setEstimatedPrice(autoEstimated);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmit = () => {
-    if (!formData.customerName || !formData.customerPhone || !formData.width || !formData.height || !formData.address) {
-      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'กรุณาเข้าสู่ระบบ',
+        text: 'คุณต้องเข้าสู่ระบบก่อนสั่งทำสินค้า',
+        confirmButtonText: 'เข้าสู่ระบบ',
+        showCancelButton: true,
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#dc2626'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login');
+        }
+      });
       return;
     }
-    alert('คำสั่งซื้อของคุณได้รับการบันทึกแล้ว! เราจะติดต่อกลับไปภายใน 24 ชั่วโมง');
+    setLoading(true);
+    try {
+      const payload = {
+        ...form,
+        productType,
+        size: sizeString,
+        parsed,
+        priceClient: estimatedPrice,
+        user_id: user.id,
+        fixedLeftM2: form.fixedLeftM2 === '' ? null : parseFloat(form.fixedLeftM2),
+        fixedRightM2: form.fixedRightM2 === '' ? null : parseFloat(form.fixedRightM2)
+      };
+      const res = await fetch(`${host}/api/custom/order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      await res.json();
+      setSuccess(true);
+      setForm({
+        category: '',
+        width: '',
+        height: '',
+        unit: 'cm',
+        color: '',
+        quantity: 1,
+        details: '',
+        hasScreen: false,
+        roundFrame: false,
+        swingType: 'บานเดี่ยว',
+        mode: 'มาตรฐาน',
+        fixedLeftM2: '',
+        fixedRightM2: '',
+      });
+      setEstimatedPrice(0);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch {
+      setSuccess(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // เงื่อนไขแสดง option ตามประเภท
+  const showHasScreen = productType === 'หน้าต่างบานเลื่อน2' || productType === 'หน้าต่างบานเลื่อน4';
+  const showRoundFrame = productType === 'ประตูมุ้ง';
+  const showSwingType = productType === 'ประตูสวิง';
+  const showHangingOptions = productType === 'ประตูรางแขวน';
+  const showFixedAreas = showHangingOptions && form.mode === 'แบ่ง4';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Back Button */}
-          <div className="flex items-center p-4 bg-gradient-to-r from-green-600 to-emerald-600">
-            <button
-              onClick={() => navigate(-1)}
-              className="text-white bg-green-700 hover:bg-green-800 rounded-lg px-4 py-2 font-semibold flex items-center mr-4"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-              </svg>
-              กลับ
-            </button>
-            <h1 className="text-3xl font-bold text-white">สั่งทำกระจกอลูมิเนียมออกแบบเอง</h1>
+    <div style={{ maxWidth: 560, margin: '32px auto', padding: 0 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(90deg,#43e97b 0%,#38f9d7 100%)',
+            color: '#fff', fontWeight: 700, fontSize: 16,
+            border: 'none', borderRadius: 24, padding: '10px 24px',
+            boxShadow: '0 2px 8px rgba(67,233,123,0.15)',
+            cursor: 'pointer', transition: 'background 0.2s',
+          }}
+        >
+          <span style={{ fontSize: 20, lineHeight: 1 }}>←</span>
+          กลับหน้าก่อนหน้า
+        </button>
+       
+      </div>
+      <div style={{
+        background: '#fff',
+        borderRadius: 16,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+        padding: '32px 24px',
+        border: '1px solid #eee',
+      }}>
+        <h2 style={{ textAlign: 'center', color: '#1976d2', marginBottom: 24, fontWeight: 700, letterSpacing: 1 }}>
+          สั่งทำสินค้า
+        </h2>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* ประเภทสินค้า */}
+          <div>
+            <label style={{ fontWeight: 500 }}>ประเภทสินค้า</label>
+            <select name="category" value={form.category} onChange={handleChange} required style={selectStyle}>
+              <option value="">เลือกประเภท</option>
+              {categories.map(c => (
+                <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
+              ))}
+            </select>
           </div>
-          {/* Header */}
-          {/* <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8">
-            <h1 className="text-3xl font-bold mb-2">สั่งทำกระจกอลูมิเนียมออกแบบเอง</h1>
-            <p className="text-blue-100">ออกแบบและสั่งทำกระจกตามความต้องการของคุณ</p>
-          </div> */}
-          <div className="p-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Left Column */}
-              <div className="space-y-6">
-                {/* ขนาดกระจก */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <Ruler className="mr-2 text-green-600" />
-                    ขนาดกระจก
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">ความกว้าง (ซม.)</label>
-                      <input
-                        type="number"
-                        value={formData.width}
-                        onChange={(e) => handleInputChange('width', e.target.value)}
-                        className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="เช่น 60"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">ความสูง (ซม.)</label>
-                      <input
-                        type="number"
-                        value={formData.height}
-                        onChange={(e) => handleInputChange('height', e.target.value)}
-                        className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="เช่น 80"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium mb-2">ความหนา (มม.)</label>
-                    <select
-                      value={formData.thickness}
-                      onChange={(e) => handleInputChange('thickness', e.target.value)}
-                      className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="3">3 มม.</option>
-                      <option value="4">4 มม.</option>
-                      <option value="5">5 มม.</option>
-                      <option value="6">6 มม.</option>
-                    </select>
-                  </div>
-                </div>
 
-                {/* รูปทรง */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4">รูปทรงกระจก</h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    {shapes.map((shape) => (
-                      <button
-                        key={shape.value}
-                        type="button"
-                        onClick={() => handleInputChange('shape', shape.value)}
-                        className={`p-4 rounded-lg border-2 text-center transition-all ${
-                          formData.shape === shape.value
-                            ? 'border-green-500 bg-green-50 text-green-700'
-                            : 'border-green-200 hover:border-green-300'
-                        }`}
-                      >
-                        <div className="text-2xl mb-1">{shape.icon}</div>
-                        <div className="text-sm font-medium">{shape.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ประเภทกระจก */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <Eye className="mr-2 text-green-600" />
-                    ประเภทกระจก
-                  </h3>
-                  <div className="space-y-3">
-                    {mirrorTypes.map((type) => (
-                      <label key={type.value} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
-                        <input
-                          type="radio"
-                          name="mirrorType"
-                          value={type.value}
-                          checked={formData.mirrorType === type.value}
-                          onChange={(e) => handleInputChange('mirrorType', e.target.value)}
-                          className="mr-3 text-green-600"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium">{type.label}</div>
-                          <div className="text-sm text-gray-500">+{type.price} บาท/ตร.ม.</div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* อัพโหลดรูป */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <Upload className="mr-2 text-green-600" />
-                    อัพโหลดแบบออกแบบ
-                  </h3>
-                  <div className="border-2 border-dashed border-green-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="imageUpload"
-                    />
-                    <label htmlFor="imageUpload" className="cursor-pointer">
-                      {uploadedImage ? (
-                        <img src={uploadedImage} alt="Preview" className="max-w-full h-32 mx-auto rounded" />
-                      ) : (
-                        <div>
-                          <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                          <p className="text-gray-500">คลิกเพื่อเลือกรูปภาพ</p>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-                </div>
+          {/* ขนาด */}
+          <div>
+            <label style={{ fontWeight: 500 }}>ขนาด</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: 8, marginTop: 4 }}>
+              <div>
+                <label style={{ fontSize: 14, color: '#555' }}>ความกว้าง</label>
+                <input name="width" value={form.width} onChange={handleChange} required inputMode="decimal" style={inputStyle} />
               </div>
-
-              {/* Right Column */}
-              <div className="space-y-6">
-                {/* กรอบ */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4">ประเภทกรอบ</h3>
-                  <div className="space-y-3">
-                    {frameTypes.map((frame) => (
-                      <label key={frame.value} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-green-50">
-                        <input
-                          type="radio"
-                          name="frameType"
-                          value={frame.value}
-                          checked={formData.frameType === frame.value}
-                          onChange={(e) => handleInputChange('frameType', e.target.value)}
-                          className="mr-3 text-green-600"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium">{frame.label}</div>
-                          <div className="text-sm text-gray-500">
-                            {frame.price > 0 ? `+${frame.price} บาท/ซม.` : 'ฟรี'}
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-
-                  {formData.frameType !== 'none' && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium mb-2">ความกว้างกรอบ (มม.)</label>
-                      <input
-                        type="number"
-                        value={formData.frameWidth}
-                        onChange={(e) => handleInputChange('frameWidth', e.target.value)}
-                        className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="20"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* สีกรอบ */}
-                {formData.frameType !== 'none' && (
-                  <div className="bg-green-50 rounded-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
-                      <Palette className="mr-2 text-green-600" />
-                      สีกรอบ
-                    </h3>
-                    <div className="grid grid-cols-5 gap-3">
-                      {frameColors.map((color) => (
-                        <button
-                          key={color.value}
-                          type="button"
-                          onClick={() => handleInputChange('frameColor', color.value)}
-                          className={`p-3 rounded-lg border-2 text-center transition-all ${
-                            formData.frameColor === color.value
-                              ? 'border-green-500 ring-2 ring-green-200'
-                              : 'border-green-200 hover:border-green-300'
-                          }`}
-                        >
-                          <div
-                            className="w-8 h-8 rounded-full mx-auto mb-1 border"
-                            style={{ backgroundColor: color.color }}
-                          ></div>
-                          <div className="text-xs font-medium">{color.label}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* รายละเอียดเพิ่มเติม */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4">รายละเอียดเพิ่มเติม</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">ขอบกระจก</label>
-                      <select
-                        value={formData.edgeType}
-                        onChange={(e) => handleInputChange('edgeType', e.target.value)}
-                        className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      >
-                        <option value="polished">ขัดเรียบ</option>
-                        <option value="beveled">เจียระไน (+20%)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">วิธีการติดตั้ง</label>
-                      <select
-                        value={formData.mounting}
-                        onChange={(e) => handleInputChange('mounting', e.target.value)}
-                        className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      >
-                        <option value="wall">ติดผนัง</option>
-                        <option value="stand">ตั้งโต๊ะ</option>
-                        <option value="hang">แขวน</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">จำนวน</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.quantity}
-                        onChange={(e) => handleInputChange('quantity', parseInt(e.target.value) || 1)}
-                        className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* ข้อมูลลูกค้า */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4">ข้อมูลลูกค้า</h3>
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      value={formData.customerName}
-                      onChange={(e) => handleInputChange('customerName', e.target.value)}
-                      placeholder="ชื่อ-นามสกุล"
-                      className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
-                    />
-                    <input
-                      type="tel"
-                      value={formData.customerPhone}
-                      onChange={(e) => handleInputChange('customerPhone', e.target.value)}
-                      placeholder="เบอร์โทรศัพท์"
-                      className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
-                    />
-                    <input
-                      type="email"
-                      value={formData.customerEmail}
-                      onChange={(e) => handleInputChange('customerEmail', e.target.value)}
-                      placeholder="อีเมล"
-                      className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      placeholder="ที่อยู่สำหรับจัดส่ง"
-                      rows="3"
-                      className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
-                    ></textarea>
-                  </div>
-                </div>
-
-                {/* คำขอพิเศษ */}
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4">คำขอพิเศษ</h3>
-                  <textarea
-                    value={formData.specialRequests}
-                    onChange={(e) => handleInputChange('specialRequests', e.target.value)}
-                    placeholder="รายละเอียดเพิ่มเติม เช่น การออกแบบพิเศษ หรือข้อกำหนดเฉพาะ"
-                    rows="4"
-                    className="w-full p-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  ></textarea>
-                </div>
+              <div>
+                <label style={{ fontSize: 14, color: '#555' }}>ความสูง</label>
+                <input name="height" value={form.height} onChange={handleChange} required inputMode="decimal" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ fontSize: 14, color: '#555' }}>หน่วย</label>
+                <select name="unit" value={form.unit} onChange={handleChange} style={selectStyle}>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </select>
               </div>
             </div>
+          </div>
 
-            {/* สรุปราคา */}
-            <div className="mt-8 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold flex items-center">
-                  <Calculator className="mr-2 text-emerald-600" />
-                  ราคาประเมิน
-                </h3>
-                <div className="text-3xl font-bold text-emerald-600">
-                  ฿{estimatedPrice.toLocaleString()}
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                *ราคานี้เป็นเพียงการประเมินเบื้องต้น ราคาจริงอาจแตกต่างขึ้นอยู่กับรายละเอียดการผลิต
-              </p>
-              
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-green-700 hover:to-emerald-700 transition-all flex items-center justify-center"
-              >
-                <ShoppingCart className="mr-2" />
-                ส่งคำสั่งซื้อ
-              </button>
+          {/* สี */}
+          <div>
+            <label style={{ fontWeight: 500 }}>สี</label>
+            <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
+              {['ขาว','ชา','เงิน','ดำ'].map(c => (
+                <label key={c} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <input
+                    type="radio"
+                    name="color"
+                    value={c}
+                    checked={form.color === c}
+                    onChange={handleChange}
+                  />
+                  {c}{c==='ดำ' && ' (+300)'}
+                </label>
+              ))}
             </div>
           </div>
-        </div>
+
+          {/* จำนวน */}
+          <div>
+            <label style={{ fontWeight: 500 }}>จำนวน</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '56px 1fr 56px', gap: 8, alignItems: 'center', marginTop: 4 }}>
+              <button type="button" onClick={() => handleQty(-1)} style={iconBtnStyle}>−</button>
+              <input type="number" name="quantity" value={form.quantity}
+                onChange={(e) => setForm(prev => ({ ...prev, quantity: clampQty(parseInt(e.target.value, 10)) }))}
+                min={1} required style={{ ...inputStyle, textAlign: 'center' }} />
+              <button type="button" onClick={() => handleQty(1)} style={iconBtnStyle}>+</button>
+            </div>
+          </div>
+
+          {/* เงื่อนไขอื่น ๆ (ตามประเภท) */}
+          {showHasScreen && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input type="checkbox" name="hasScreen" checked={form.hasScreen} onChange={handleChange} />
+              <label>เพิ่มมุ้งลวด (+500)</label>
+            </div>
+          )}
+
+          {showRoundFrame && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input type="checkbox" name="roundFrame" checked={form.roundFrame} onChange={handleChange} />
+              <label>กรอบวงกลม (ติ๊ก = 1200/ชุด, ไม่ติ๊ก = 800/ชุด)</label>
+            </div>
+          )}
+
+          {showSwingType && (
+            <div>
+              <label style={{ fontWeight: 500 }}>ประเภทประตูสวิง</label>
+              <select name="swingType" value={form.swingType} onChange={handleChange} style={selectStyle}>
+                <option value="บานเดี่ยว">บานเดี่ยว (≤1.2×2 = 7000)</option>
+                <option value="บานคู่">บานคู่ (14000)</option>
+              </select>
+            </div>
+          )}
+
+          {/* รายละเอียด */}
+          <div>
+            <label style={{ fontWeight: 500 }}>รายละเอียดเพิ่มเติม</label>
+            <textarea name="details" value={form.details} onChange={handleChange} style={{ ...inputStyle, minHeight: 60 }} placeholder="รายละเอียดอื่น ๆ" />
+          </div>
+
+
+          <div style={{ margin: '8px 0', textAlign: 'center' }}>
+            {estimatedPrice > 0 ? (
+              <span style={{ color: '#388e3c', fontWeight: 700, fontSize: 18 }}>
+                ราคาประเมิน: {Number(estimatedPrice).toLocaleString()} บาท
+              </span>
+            ) : (
+              <span style={{ color: '#e53935', fontWeight: 600, fontSize: 16 }}>
+                ขนาดเล็กกว่าขั้นต่ำ ไม่สามารถคำนวณราคา กรุณาติดต่อร้าน
+              </span>
+            )}
+          </div>
+
+          <button type="submit" disabled={loading} style={{ ...buttonStyle, background: '#1976d2', color: '#fff' }}>
+            ส่งคำสั่งทำ
+          </button>
+          {success && <div style={{ color: '#1976d2', marginTop: 8, textAlign: 'center', fontWeight: 600 }}>ส่งคำสั่งทำสำเร็จ!</div>}
+        </form>
       </div>
     </div>
   );
 }
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: 8,
+  border: '1px solid #ccc',
+  fontSize: 16,
+  marginTop: 4,
+  boxSizing: 'border-box',
+};
+const selectStyle = { ...inputStyle, background: '#fafafa' };
+const buttonStyle = {
+  padding: '12px 0',
+  borderRadius: 8,
+  border: 'none',
+  background: '#1976d2',
+  color: '#fff',
+  fontWeight: 700,
+  fontSize: 16,
+  cursor: 'pointer',
+  marginTop: 8,
+  transition: 'background 0.2s',
+};
+const iconBtnStyle = {
+  ...buttonStyle,
+  padding: 0,
+  height: 44,
+  background: '#f5f5f5',
+  color: '#333',
+  border: '1px solid #ddd',
+};
+
+export default Custom;

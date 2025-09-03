@@ -9,13 +9,13 @@ const menuItems = [
   { to: '/users/profile', icon: '👤', label: 'โปรไฟล์' },
   { to: '/users/favorite', icon: '❤️', label: 'รายการโปรด' },
   { to: '/users/orders', icon: '🛒', label: 'คำสั่งซื้อของฉัน' },
-  { to: '/users/notifications', icon: '🔔', label: 'แจ้งเตือน' },
+  
 ];
 
 export default function SidebarProflie() {
   const navigate = useNavigate();
 
-  const [collapsed, setCollapsed] = useState(false);
+    // Removed collapsed state and related logic
   const [user, setUser] = useState({ name: 'Guest', email: '', profile_picture: '' });
   const host = import.meta.env.VITE_HOST;
 
@@ -91,105 +91,99 @@ export default function SidebarProflie() {
     <div
       className="vh-100 p-3 d-flex flex-column"
       style={{
-        width: collapsed ? '70px' : '250px',
+        width: '250px',
         transition: 'width 0.3s',
         position: 'fixed',
-        background: '#dcfce7',
+        background: '#ffffff', // Changed to white
         color: '#166534',
         fontFamily: "'Kanit', sans-serif",
-        zIndex: 1000
+        zIndex: 1000,
+        boxShadow: '0 4px 24px 0 rgba(34,197,94,0.12), 0 1.5px 6px 0 rgba(0,0,0,0.08)'
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        {!collapsed && <h5 style={{ fontWeight: 700, letterSpacing: 1, color: '#222' }}>เมนูผู้ใช้</h5>}
-        <button onClick={() => setCollapsed(!collapsed)} className="btn btn-sm border-0" style={{ color: '#222' }}>
-          <FaBars />
-        </button>
+    <h5 style={{ fontWeight: 700, letterSpacing: 1, color: '#222' }}>เมนูผู้ใช้</h5>
       </div>
 
       <div className="d-flex flex-column align-items-center mb-4">
-        <img
-          src={user.profile_picture ? `${host}${user.profile_picture}` : '/images/655fc323-6c03-4394-ba95-5280da436298.jpg'}
-          alt="Profile"
-          className="rounded-circle mb-2"
-          style={{ 
-            width: 60, 
-            height: 60, 
-            objectFit: 'cover', 
-            border: '2px solid #22c55e',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}
-          onError={(e) => {
-            e.target.src = '/images/655fc323-6c03-4394-ba95-5280da436298.jpg';
-          }}
-        />
-        {!collapsed && (
-          <>
-            <div style={{ fontWeight: 600, textAlign: 'center', color: '#222' }}>
-              {isLoggedIn ? user.name : 'ผู้เยี่ยมชม'}
-            </div>
-            {isLoggedIn && (
-              <div style={{ fontSize: 13, color: '#222', opacity: 0.8 }}>
-                {user.email}
-              </div>
-            )}
-          </>
+      <img
+        src={user.profile_picture ? `${host}${user.profile_picture}` : '/images/655fc323-6c03-4394-ba95-5280da436298.jpg'}
+        alt="Profile"
+        className="rounded-circle mb-2"
+        style={{ 
+        width: 60, 
+        height: 60, 
+        objectFit: 'cover', 
+        border: '2px solid #22c55e',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}
+        onError={(e) => {
+        e.target.src = '/images/655fc323-6c03-4394-ba95-5280da436298.jpg';
+        }}
+      />
+        <div style={{ fontWeight: 600, textAlign: 'center', color: '#222' }}>
+        {isLoggedIn ? user.name : 'ผู้เยี่ยมชม'}
+        </div>
+        {isLoggedIn && (
+        <div style={{ fontSize: 13, color: '#222', opacity: 0.8 }}>
+          {user.email}
+        </div>
         )}
       </div>
       
       <ul className="nav flex-column mb-3">
-        
-        {isLoggedIn ? (
-          // แสดงเมนูสำหรับผู้ใช้ที่ล็อกอินแล้ว
-          menuItems.map((item, idx) => (
-            <li className="nav-item" key={idx}>
-              <Link
-                to={item.to}
-                className="nav-link sidebar-link text-success"
-                style={{ fontWeight: 500 }}
-              >
-                {item.icon} {!collapsed && item.label}
-              </Link>
-            </li>
-          ))
-        ) : (
-          // แสดงเมนูสำหรับผู้เยี่ยมชม
-          <li className="nav-item">
-            <Link
-              to="/login"
-              className="nav-link sidebar-link text-success"
-              style={{ fontWeight: 500 }}
-            >
-              🔐 {!collapsed && 'เข้าสู่ระบบ'}
-            </Link>
-          </li>
-        )}
-        
-        {isLoggedIn && (
-          <li className="nav-item">
-            <button
-              onClick={handleLogout}
-              className="btn btn-link nav-link text-success text-start sidebar-link"
-              style={{ fontWeight: 500 }}
-            >
-              🔓 {!collapsed && 'ออกจากระบบ'}
-            </button>
-          </li>
-        )}
+      
+      {isLoggedIn ? (
+        // แสดงเมนูสำหรับผู้ใช้ที่ล็อกอินแล้ว
+        menuItems.map((item, idx) => (
+        <li className="nav-item" key={idx}>
+          <Link
+          to={item.to}
+          className="nav-link sidebar-link text-success"
+          style={{ fontWeight: 500 }}
+          >
+            {item.icon} {item.label}
+          </Link>
+        </li>
+        ))
+      ) : (
+        // แสดงเมนูสำหรับผู้เยี่ยมชม
+        <li className="nav-item">
+        <Link
+          to="/login"
+          className="nav-link sidebar-link text-success"
+          style={{ fontWeight: 500 }}
+        >
+          🔐 เข้าสู่ระบบ
+        </Link>
+        </li>
+      )}
+      
+      {isLoggedIn && (
+        <li className="nav-item">
+        <button
+          onClick={handleLogout}
+          className="btn btn-link nav-link text-success text-start sidebar-link"
+          style={{ fontWeight: 500 }}
+        >
+          🔓 ออกจากระบบ
+        </button>
+        </li>
+      )}
       </ul>
       
       <style>{`
-        .sidebar-link:hover, .sidebar-link:focus {
-          background: rgba(34,197,94,0.12);
-          color: #166534 !important;
-          border-radius: 8px;
-          text-decoration: none;
-          transition: all 0.2s ease;
-        }
-        .sidebar-link {
-          transition: all 0.2s ease;
-        }
+      .sidebar-link:hover, .sidebar-link:focus {
+        background: rgba(34,197,94,0.12);
+        color: #166534 !important;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+      .sidebar-link {
+        transition: all 0.2s ease;
+      }
       `}</style>
     </div>
-  );
+    );
 }

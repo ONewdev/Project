@@ -5,7 +5,7 @@ import Profile from '../pages/users/Profile';
 import Favorite from '../pages/users/Favorite';
 import Orders from '../pages/users/Orders';
 import OrdersPending from '../pages/users/OrdersPending';
-import OrdersConfirmed from '../pages/users/OrdersConfirmed';
+
 import OrdersShipped from '../pages/users/OrdersShipped';
 import OrdersDelivered from '../pages/users/OrdersDelivered';
 import OrdersCancelled from '../pages/users/OrdersCancelled';
@@ -24,7 +24,7 @@ export default function UsersRoutes() {
         <Route path="favorite" element={<Favorite />} />
         <Route path="orders" element={<Orders />} />
         <Route path="pending" element={<OrdersPending />} />
-        <Route path="confirmed" element={<OrdersConfirmed />} />
+        
         <Route path="shipped" element={<OrdersShipped />} />
         <Route path="delivered" element={<OrdersDelivered />} />
         <Route path="cancelled" element={<OrdersCancelled />} />

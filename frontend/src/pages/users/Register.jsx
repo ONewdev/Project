@@ -61,13 +61,21 @@ export default function Register() {
           password: formData.password
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
+        const msg = data?.message || (res.status === 400 ? 'ข้อมูลไม่ถูกต้อง' : 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
+        throw new Error(msg);
+      }
+
+      let successMsg = 'คุณสามารถเข้าสู่ระบบได้ทันที';
+      if (data.emailSent === false) {
+        successMsg = 'สมัครสมาชิกสำเร็จ แต่ส่งอีเมลไม่สำเร็จ กรุณาตรวจสอบอีเมลของคุณ';
+      } else if (data.emailSent === true) {
+        successMsg = 'สมัครสมาชิกสำเร็จ! ระบบได้แจ้งเตือนไปยังอีเมลของคุณแล้วครับผม';
       }
       Swal.fire({
         title: 'สมัครสมาชิกสำเร็จ!',
-        text: 'คุณสามารถเข้าสู่ระบบได้ทันที',
+        text: successMsg,
         icon: 'success',
         confirmButtonText: 'ไปที่หน้าล็อกอิน',
       }).then(() => {
@@ -115,6 +123,13 @@ export default function Register() {
             <h2 className="text-3xl font-bold text-green-800 mb-2">สร้างบัญชีใหม่</h2>
             <p className="text-green-600">กรุณากรอกข้อมูลเพื่อสมัครสมาชิก</p>
           </div>
+
+          {/* Server/general error */}
+          {errors.general && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-3">
+              {errors.general}
+            </div>
+          )}
 
           {/* Form */}
           <div className="space-y-6">

@@ -10,6 +10,30 @@ function OrdersShipped() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ฟังก์ชันยืนยันรับสินค้า
+  const handleConfirmOrder = async (orderId) => {
+    try {
+      const response = await fetch(`${host}/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'delivered' }),
+        credentials: 'include',
+      });
+      if (response.ok) {
+        // รีเฟรชข้อมูลออเดอร์ใหม่
+        const updatedOrders = await fetch(`${host}/api/orders/customer/${user.id}`, { credentials: 'include' });
+        if (updatedOrders.ok) {
+          const data = await updatedOrders.json();
+          setOrders(data.filter(o => o.status === 'shipped'));
+        }
+      } else {
+        alert('เกิดข้อผิดพลาดในการยืนยันรับสินค้า');
+      }
+    } catch (error) {
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       navigate('/login');
@@ -52,7 +76,7 @@ function OrdersShipped() {
                 </div>
                 <button
                   className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
-                  onClick={() => {/* TODO: ยืนยันรับสินค้า */}}
+                  onClick={() => handleConfirmOrder(order.id)}
                 >
                   ยืนยันรับสินค้า
                 </button>

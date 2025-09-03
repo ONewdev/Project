@@ -54,30 +54,38 @@ function Admin() {
     e.preventDefault();
     if (editAdmin) {
       // update
-      fetch(`${host}/api/admins/${editAdmin.id}`, {
+      fetch(`${host}/api/admin/${editAdmin.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Update failed');
+          return res.json();
+        })
         .then(data => {
           setAdmins(prev => prev.map(a => (a.id === editAdmin.id ? { ...a, username: form.username } : a)));
           setShowModal(false);
           Swal.fire('สำเร็จ', 'อัปเดตข้อมูลแอดมินแล้ว', 'success');
-        });
+        })
+        .catch(() => Swal.fire('ผิดพลาด', 'ไม่สามารถอัปเดตรหัสผ่านได้', 'error'));
     } else {
-      // create
-        fetch(`${host}/api/admins`, {
+      // create (backend currently has no POST route; using PATCH/GET only)
+        fetch(`${host}/api/admin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form),
         })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Create failed');
+          return res.json();
+        })
         .then(data => {
           setAdmins(prev => [...prev, data]);
           setShowModal(false);
           Swal.fire('สำเร็จ', 'เพิ่มแอดมินแล้ว', 'success');
-        });
+        })
+        .catch(() => Swal.fire('ผิดพลาด', 'ไม่สามารถเพิ่มแอดมินได้', 'error'));
     }
   };
 
@@ -96,7 +104,7 @@ function Admin() {
         <table className="min-w-full bg-white rounded shadow">
           <thead>
             <tr className="bg-green-100 text-green-800">
-              <th className="py-2 px-4">Username</th>
+              <th className="py-2 px-4">Userna</th>
               <th className="py-2 px-4">Actions</th>
             </tr>
           </thead>

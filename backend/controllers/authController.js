@@ -19,7 +19,7 @@ exports.login = async (req, res) => {
       // ไม่ set cookie อีกต่อไป ส่ง token กลับไปให้ frontend เก็บใน localStorage
       res.json({ success: true, message: 'Login successful', user, token });
     } else {
-      res.status(401).json({ success: false, message: 'Invalid credentials' });
+      res.status(401).json({ success: false, message: 'รหัสผ่านไม่ถูกต้อง' });
     }
   } catch (err) {
     console.error('เข้าสู่ระบบแอดมินไม่สำเร็จ',err.message);

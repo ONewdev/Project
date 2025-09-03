@@ -15,6 +15,12 @@ function Orders() {
   const [cart, setCart] = useState([]);
   const getCartKey = () => (user ? `cart_${user.id}` : 'cart_guest');
 
+  const formatCurrency = (num) => (
+    num !== undefined && num !== null && !isNaN(Number(num))
+      ? `฿${Number(num).toLocaleString('th-TH', { minimumFractionDigits: 2 })}`
+      : '-'
+  );
+
   // โหลดข้อมูลคำสั่งซื้อจาก backend
   useEffect(() => {
     if (!user) {
@@ -305,18 +311,7 @@ function Orders() {
                               ยกเลิกออเดอร์
                             </button>
                           )}
-                          {/* ปุ่มดูใบเสร็จ (ยกเว้นสถานะ cancelled) */}
-                          {order.status !== 'cancelled' && (
-                            <a
-                              href={`${host}/api/orders/${order.id}/receipt`}
-                              className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-xs"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              download={`receipt_order_${order.id}.pdf`}
-                            >
-                              ดาวน์โหลดใบเสร็จ
-                            </a>
-                          )}
+                          {/* ปุ่มดูใบเสร็จถูกนำออก */}
                         </div>
                       </div>
                     ))}

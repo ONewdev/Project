@@ -1,4 +1,5 @@
 
+try { require('dotenv').config(); } catch (err) { /* noop when dotenv is missing */ }
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -20,6 +21,8 @@ const paymentsRoutes = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
 const chatRoutes = require('./routes/chat');
 const inboxRoutes = require('./routes/inbox');
+const customOrderRoutes = require('./routes/customOrders');
+
 
 
 
@@ -58,6 +61,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/customers/notifications', notificationsRoutes);
 app.use('/api/messages', chatRoutes);
 app.use('/api/inbox', inboxRoutes);
+app.use('/api/custom', customOrderRoutes);
 // Serve static files (ภาพ) จาก public/uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 // --- Socket.io ---

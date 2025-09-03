@@ -40,7 +40,6 @@ function Products() {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [productRatings, setProductRatings] = useState({});
   const [favoritedProducts, setFavoritedProducts] = useState({});
-  const [imageLoadingStates, setImageLoadingStates] = useState({});
   // โหลดสถานะ like/favorite ของแต่ละสินค้า
 
 
@@ -107,7 +106,20 @@ function Products() {
   const handleRatingChange = async (productId, newRating) => {
     console.log(`Rating clicked: Product ${productId}, Rating ${newRating}`);
     if (!user) {
-      alert("กรุณาเข้าสู่ระบบ");
+      Swal.fire({
+        icon: 'warning',
+        title: 'กรุณาเข้าสู่ระบบ',
+        text: 'คุณต้องเข้าสู่ระบบก่อนให้คะแนนสินค้า',
+        confirmButtonText: 'เข้าสู่ระบบ',
+        showCancelButton: true,
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#dc2626'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login');
+        }
+      });
       return;
     }
     try {
@@ -120,22 +132,73 @@ function Products() {
       }));
       
       // แสดง feedback ให้ user ทราบ
-      console.log(`ให้คะแนน ${newRating} ดาวสำหรับสินค้า ${productId}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'ให้คะแนนสำเร็จ!',
+        text: `คุณได้ให้คะแนน ${newRating} ดาว`,
+        showConfirmButton: false,
+        timer: 1500,
+        confirmButtonColor: '#16a34a',
+      });
     } catch (error) {
       console.error("Error submitting rating:", error);
-      alert("เกิดข้อผิดพลาดในการให้คะแนน");
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        text: 'ไม่สามารถให้คะแนนได้ในขณะนี้',
+        confirmButtonColor: '#16a34a',
+      });
     }
   };
 
   const handleFavorite = async (productId) => {
-    if (!user) return alert("กรุณาเข้าสู่ระบบ");
-    if (favoritedProducts[productId]) {
-      await removeFavorite(user.id, productId);
-    } else {
-      await addFavorite(user.id, productId);
-      // เด้งไปหน้า favorite หลังจากกด favorite
+    if (!user) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'กรุณาเข้าสู่ระบบ',
+        text: 'คุณต้องเข้าสู่ระบบก่อนเพิ่มสินค้าในรายการโปรด',
+        confirmButtonText: 'เข้าสู่ระบบ',
+        showCancelButton: true,
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#dc2626'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login');
+        }
+      });
+      return;
     }
-    await fetchStatuses(); // รีเฟรชสถานะจาก backend จริง
+    try {
+      if (favoritedProducts[productId]) {
+        await removeFavorite(user.id, productId);
+        Swal.fire({
+          icon: 'success',
+          title: 'นำออกจากรายการโปรดแล้ว',
+          showConfirmButton: false,
+          timer: 1500,
+          confirmButtonColor: '#16a34a',
+        });
+      } else {
+        await addFavorite(user.id, productId);
+        Swal.fire({
+          icon: 'success',
+          title: 'เพิ่มในรายการโปรดแล้ว',
+          showConfirmButton: false,
+          timer: 1500,
+          confirmButtonColor: '#16a34a',
+        });
+      }
+      await fetchStatuses(); // รีเฟรชสถานะจาก backend จริง
+    } catch (error) {
+      console.error("Error updating favorite:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        text: 'ไม่สามารถอัพเดทรายการโปรดได้ในขณะนี้',
+        confirmButtonColor: '#16a34a',
+      });
+    }
   };
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -190,7 +253,6 @@ function Products() {
 
         // 🔥 เอา filter searchTerm ออกจากที่นี่ เพราะจะทำใน useEffect อื่น
         setProducts(productList);
-        setImageLoadingStates({}); // Reset image loading states
         setLoading(false);
       } catch (err) {
         console.error("โหลดสินค้า error:", err);
@@ -285,8 +347,17 @@ function Products() {
     if (!user) {
       Swal.fire({
         icon: 'warning',
-        title: 'กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า',
+        title: 'กรุณาเข้าสู่ระบบ',
+        text: 'คุณต้องเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า',
+        confirmButtonText: 'เข้าสู่ระบบ',
+        showCancelButton: true,
+        cancelButtonText: 'ยกเลิก',
         confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#dc2626'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login');
+        }
       });
       return;
     }
@@ -304,14 +375,27 @@ function Products() {
       icon: 'success',
       title: 'เพิ่มสินค้าลงตะกร้าแล้ว!',
       showConfirmButton: false,
-      timer: 1200,
+      timer: 1500,
       confirmButtonColor: '#16a34a',
     });
   };
 
   const handleBuyNow = (product) => {
     if (!user) {
-      alert('กรุณาเข้าสู่ระบบก่อนสั่งซื้อ');
+      Swal.fire({
+        icon: 'warning',
+        title: 'กรุณาเข้าสู่ระบบ',
+        text: 'คุณต้องเข้าสู่ระบบก่อนทำการสั่งซื้อสินค้า',
+        confirmButtonText: 'เข้าสู่ระบบ',
+        showCancelButton: true,
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#dc2626'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login');
+        }
+      });
       return;
     }
     let cartKey = `cart_${user.id}`;
@@ -321,19 +405,7 @@ function Products() {
     navigate('/users/checkout');
   };
 
-  const handleImageLoad = (productId) => {
-    setImageLoadingStates(prev => ({
-      ...prev,
-      [productId]: false
-    }));
-  };
 
-  const handleImageError = (productId) => {
-    setImageLoadingStates(prev => ({
-      ...prev,
-      [productId]: false
-    }));
-  };
 
   // ฟังก์ชันสำหรับสร้าง URL รูปภาพ
   const getImageUrl = (imageUrl) => {
@@ -380,7 +452,7 @@ function Products() {
         <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="flex flex-col sm:flex-row gap-4 w-full">
             <select
-              className="w-full sm:w-64 py-3 px-4 border-2 border-blue-400 rounded-2xl shadow-lg text-blue-700 font-semibold bg-white focus:ring-4 focus:ring-blue-300"
+              className="w-full sm:w-64 py-3 px-4 border-2 border-green-400 rounded-2xl shadow-lg text-green-700 font-semibold bg-white focus:ring-4 focus:ring-green-300"
               value={selectedCategory}
               onChange={(e) => {
                 setSelectedCategory(e.target.value);
@@ -396,23 +468,23 @@ function Products() {
             </select>
           </div>
 
-          {user && (
+          
             <button
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition mb-2 sm:mb-0 "
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full border-2 border-green-700 transition mb-2 sm:mb-0 "
               onClick={() => navigate("/custom-order")}
             >
               สั่งทำสินค้า
             </button>
-          )}
+          
           <div className="relative w-full sm:w-96">
             <input
               type="text"
-              placeholder="ค้นหาสินค้า ชื่อ/หมวดหมู่/รายละเอียด..."
+              placeholder="ค้นหาสินค้า ชื่อ/หมวดหมู่"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border-2 border-blue-400 bg-white rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-300 focus:border-blue-500 text-lg font-semibold text-blue-700 placeholder-blue-300 transition"
+              className="w-full pl-12 pr-4 py-3 border-2 border-green-400 bg-white rounded-2xl shadow-lg focus:ring-4 focus:ring-green-300 focus:border-green-500 text-lg font-semibold text-green-700 placeholder-black transition"
             />
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 text-2xl pointer-events-none">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-green-400 text-2xl pointer-events-none">
               🔍
             </span>
           </div>
@@ -452,36 +524,13 @@ function Products() {
                     className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 transform hover:-translate-y-1"
                   >
                     <div className="relative">
-                      {/* Loading skeleton */}
-                      {imageLoadingStates[product.id] !== false && (
-                        <div className="w-full h-64 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
-                          <div className="flex flex-col items-center space-y-2">
-                            <div className="w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                            <div className="text-gray-500 text-sm">กำลังโหลด...</div>
-                          </div>
-                        </div>
-                      )}
                       <img
                         src={getImageUrl(product.image_url)}
                         alt={product.name}
-                        className={`w-full h-64 object-cover ${
-                          imageLoadingStates[product.id] === false ? 'image-fade-in' : 'opacity-0'
-                        }`}
+                        className="w-full h-64 object-cover"
                         loading="lazy"
-                        onLoadStart={() => {
-                          setImageLoadingStates(prev => ({
-                            ...prev,
-                            [product.id]: true
-                          }));
-                        }}
-                        onLoad={() => {
-                          handleImageLoad(product.id);
-                        }}
                         onError={(e) => {
-                          handleImageError(product.id);
-                          // ป้องกันการ loop โดยตั้งค่า onerror เป็น null ก่อน
                           e.target.onerror = null;
-                          // ใช้รูป fallback ที่มีอยู่จริง
                           e.target.src = "/images/no-image.png";
                         }}
                       />
@@ -518,15 +567,15 @@ function Products() {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <button
-                          className="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 bg-green-600 text-white hover:bg-green-700 active:transform active:scale-95"
+                          className="flex-1 py-3.5 px-6 rounded-2xl font-semibold transition-all duration-300 bg-gradient-to-r from-green-600 to-green-500 text-white hover:from-green-700 hover:to-green-600 active:transform active:scale-95 shadow-md hover:shadow-lg"
                           onClick={() => handleAddToCart(product)}
                         >
                           เพิ่มลงตะกร้า
                         </button>
                         <button
-                          className="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 bg-blue-600 text-white hover:bg-blue-700 active:transform active:scale-95"
+                          className="flex-1 py-3.5 px-6 rounded-2xl font-semibold transition-all duration-300 bg-white border-2 border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600 hover:text-green-700 active:transform active:scale-95 shadow-md hover:shadow-lg"
                           onClick={() => handleBuyNow(product)}
                         >
                           สั่งซื้อเลย
@@ -535,16 +584,18 @@ function Products() {
                                              <div className="flex gap-2 justify-between mb-2 items-center">
                          <div className="flex items-center gap-2">
                            <div className="flex gap-1 star-rating">
-                             {[1, 2, 3, 4, 5].map((star) => (
+                             {[ 1, 2, 3, 4, 5].map((star) => (
                                <button
                                  key={star}
                                  onClick={() => handleRatingChange(product.id, star)}
                                  className={`text-xl transition-colors ${
-                                   star <= (productRatings[product.id] || 0)
-                                     ? 'text-yellow-400 hover:text-yellow-500'
-                                     : 'text-gray-300 hover:text-yellow-400'
+                                   star === 0
+                                     ? (productRatings[product.id] === 0 ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-300 hover:text-yellow-400')
+                                     : star <= (productRatings[product.id] || 0)
+                                       ? 'text-yellow-400 hover:text-yellow-500'
+                                       : 'text-gray-300 hover:text-yellow-400'
                                  }`}
-                                 title={`ให้คะแนน ${star} ดาว`}
+                                 title={star === 0 ? 'ให้คะแนน 0 ดาว' : `ให้คะแนน ${star} ดาว`}
                                >
                                  <FaStar />
                                </button>

@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const navItems = [
   { label: 'ทั้งหมด', path: '/users/orders' },
   { label: 'ที่ต้องชำระ', path: '/users/pending' },
-  { label: 'ที่ต้องจัดส่ง', path: '/users/confirmed' },
   { label: 'ที่ต้องรับ', path: '/users/shipped' },
   { label: 'สำเร็จแล้ว', path: '/users/delivered' },
   { label: 'ยกเลิก', path: '/users/cancelled' },
@@ -15,16 +14,29 @@ function OrdersNavbar() {
   const location = useLocation();
 
   return (
-    <nav className="mb-6 flex flex-wrap gap-2 justify-center">
-      {navItems.map(item => (
-        <button
-          key={item.path}
-          className={`px-4 py-2 rounded-full font-semibold border transition-colors duration-150 ${location.pathname === item.path ? 'bg-green-600 text-white border-green-600' : 'bg-white text-green-700 border-green-200 hover:bg-green-50'}`}
-          onClick={() => navigate(item.path)}
-        >
-          {item.label}
-        </button>
-      ))}
+    <nav className="mb-8 mx-auto w-full max-w-4xl rounded-2xl border border-green-100/70 bg-white/80 backdrop-blur-md px-4 py-4 shadow-lg">
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {navItems.map(item => {
+          const isActive = location.pathname === item.path;
+          return (
+            <button
+              key={item.path}
+              type="button"
+              title={item.label}
+              aria-current={isActive ? 'page' : undefined}
+              className={`group relative rounded-full px-6 py-2.5 font-semibold text-sm border transition-all duration-300 ease-out transform hover:scale-105 
+                ${isActive 
+                  ? 'bg-gradient-to-r from-green-600 via-emerald-500 to-green-500 text-white border-transparent shadow-lg ring-2 ring-green-500/30' 
+                  : 'bg-white/95 text-green-700 border-green-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-800 hover:border-green-300 hover:shadow-md'
+                } 
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 active:scale-95`}
+              onClick={() => navigate(item.path)}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }

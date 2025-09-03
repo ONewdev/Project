@@ -10,9 +10,20 @@ export default function PopularProducts() {
   useEffect(() => {
     async function fetchPopular() {
       try {
-        const res = await fetch(`${host}/api/products/popular`);
+        let res = await fetch(`${host}/api/products/popular`);
+        if (res.status === 404) {
+          // fallback ถ้า endpoint ไม่เจอ
+          res = await fetch(`${host}/api/products?popular=true`);
+        }
         const data = await res.json();
-        if (res.ok) setProducts(data);
+        if (res.ok) {
+          // กรองและเรียงตาม avg_rating มากสุด และไม่แสดง avg_rating = 0
+          const filtered = Array.isArray(data)
+            ? data.filter(p => (p.avg_rating ?? 0) > 0)
+            : [];
+          filtered.sort((a, b) => (b.avg_rating ?? 0) - (a.avg_rating ?? 0));
+          setProducts(filtered);
+        }
       } catch (err) {
         setProducts([]);
       } finally {

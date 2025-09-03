@@ -1,4 +1,4 @@
-
+ 
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { sendMessage, fetchMessages } from '../services/chatService';
@@ -11,6 +11,7 @@ const ChatWidget = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [user, setUser] = useState(null);
+  const [adminUnread, setAdminUnread] = useState(0);
   const socketRef = useRef(null);
   const chatEndRef = useRef(null);
 
@@ -38,8 +39,12 @@ const ChatWidget = () => {
       // แปลงข้อความให้รู้ว่าใครเป็นผู้ส่ง
       setMessages(msgs.map(m => ({
         self: m.sender_id === user.id,
-        text: m.message
+        text: m.message,
+        isAdmin: m.sender_id === 1
       })));
+      // นับข้อความที่ยังไม่ได้อ่านจาก admin
+      const unread = msgs.filter(m => m.sender_id === 1 && !m.read).length;
+      setAdminUnread(unread);
     });
     // เชื่อมต่อ socket
     if (!socketRef.current) {
@@ -49,8 +54,13 @@ const ChatWidget = () => {
         if (msg.userId === user.id || msg.userId === 1) {
           setMessages((prev) => [...prev, {
             self: msg.userId === user.id,
-            text: msg.text
+            text: msg.text,
+            isAdmin: msg.userId === 1
           }]);
+          // ถ้าเป็นข้อความจาก admin และยังไม่เปิดแชท
+          if (msg.userId === 1 && !open) {
+            setAdminUnread((prev) => prev + 1);
+          }
         }
       });
     }
@@ -79,13 +89,17 @@ const ChatWidget = () => {
         userId: user.id,
         username: user.username || user.name || 'User',
       });
-      setMessages((prev) => [...prev, { self: true, text: msg.message }]);
+      setMessages((prev) => [...prev, { self: true, text: msg.message, isAdmin: false }]);
       setInput('');
     }
   };
 
   // แสดงเฉพาะเมื่อ user login
   if (!user) return null;
+
+   // รีเซ็ตเลขแจ้งเตือนเมื่อเปิดแชท
+
+
 
   return (
     <div className="fixed bottom-6 right-6 z-[1000] flex flex-col items-end gap-4">
@@ -99,7 +113,10 @@ const ChatWidget = () => {
             {messages.length === 0 && <div className="text-gray-400 text-center py-8">เริ่มต้นสนทนาได้เลย!</div>}
             {messages.map((msg, idx) => (
               <div key={idx} className={`mb-2 flex ${msg.self ? 'justify-end' : 'justify-start'}`}>
-                <div className={`px-3 py-2 rounded-lg text-sm ${msg.self ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{msg.text || msg}</div>
+                <div className={`flex items-center`}>
+                  {/* bubble เป็นวงกลม */}
+                  <div className={`rounded-full px-4 py-2 text-sm shadow-md ${msg.self ? 'bg-white text-black' : msg.isAdmin ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}>{msg.text || msg}</div>
+                </div>
               </div>
             ))}
             <div ref={chatEndRef} />
@@ -118,13 +135,17 @@ const ChatWidget = () => {
       )}
       {/* ปุ่มเปิดแชทจะไม่แสดงถ้าไม่ได้ login */}
       {user && (
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition duration-300"
-          aria-label="ติดต่อแชท"
-        >
-          💬
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => { setOpen((v) => !v); setAdminUnread(0); }}
+            style={{ width: "56px", height: "56px", borderRadius: "50%" }}
+            className="bg-green-500 hover:bg-green-600 text-white shadow-lg flex items-center justify-center text-2xl transition duration-300"
+            aria-label="ติดต่อแชท"
+          >
+            💬
+          </button>
+         
+        </div>
       )}
     </div>
   );

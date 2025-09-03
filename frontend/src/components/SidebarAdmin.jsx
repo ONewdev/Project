@@ -7,7 +7,6 @@ import Swal from 'sweetalert2';
 export default function SidebarAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
   const [openDropdown, setOpenDropdown] = useState({
     users: false,
     products: false,
@@ -50,7 +49,6 @@ export default function SidebarAdmin() {
     });
   };
 
-  const toggleSidebar = () => setCollapsed(!collapsed);
   const isActive = (path) => location.pathname === path;
 
   const DropdownToggle = ({ label, icon, name }) => (
@@ -58,12 +56,10 @@ export default function SidebarAdmin() {
       className={`btn btn-toggle align-items-center w-100 text-start ${openDropdown[name] ? 'active' : ''}`}
       onClick={() => setOpenDropdown((prev) => ({ ...prev, [name]: !prev[name] }))}
     >
-      {icon} {!collapsed && label}
-      {!collapsed && (
-        <span style={{ float: 'right', transition: 'transform 0.3s', transform: openDropdown[name] ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-          <FaChevronDown size={12} />
-        </span>
-      )}
+      {icon} {label}
+      <span style={{ float: 'right', transition: 'transform 0.3s', transform: openDropdown[name] ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+        <FaChevronDown size={12} />
+      </span>
     </button>
   );
 
@@ -71,8 +67,7 @@ export default function SidebarAdmin() {
     <div
       className="vh-100 p-3 d-flex flex-column"
       style={{
-        width: collapsed ? '70px' : '250px',
-        transition: 'width 0.3s',
+        width: '250px',
         position: 'fixed',
         background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
         color: '#fff',
@@ -82,10 +77,7 @@ export default function SidebarAdmin() {
       }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        {!collapsed && <h5 style={{ fontWeight: 700 }}>หน้าจัดการข้อมูล</h5>}
-        <button onClick={toggleSidebar} className="btn btn-sm btn-outline-light border-0">
-          <FaBars />
-        </button>
+        <h5 style={{ fontWeight: 700 }}>หน้าจัดการข้อมูล</h5>
       </div>
 
       <ul className="nav flex-column">
@@ -95,7 +87,7 @@ export default function SidebarAdmin() {
             to="/admin/dashboard"
             className={`nav-link text-white ${isActive('/admin/dashboard') ? 'active' : ''}`}
           >
-            📈 {!collapsed && 'สถิติ'}
+            📈 สถิติ
           </Link>
         </li>
 
@@ -158,6 +150,11 @@ export default function SidebarAdmin() {
                 </Link>
               </li>
               <li>
+                <Link to="/admin/custom-orders" className={`nav-link text-white ps-4 ${isActive('/admin/custom-orders') ? 'active' : ''}`}>
+                  📝 คำสั่งทำสินค้า
+                </Link>
+              </li>
+              <li>
                 <Link to="/admin/payment-check" className={`nav-link text-white ps-4 ${isActive('/admin/payment-check') ? 'active' : ''}`}>
                   💳 ตรวจสอบการชำระเงิน
                 </Link>
@@ -167,26 +164,40 @@ export default function SidebarAdmin() {
         </li>
         {/* จัดการข้อมูลร้านค้า */}
         <li className="nav-item">
-        <DropdownToggle label="จัดการข้อมูลร้านค้า" icon="🏢" name="shop" />
+          <DropdownToggle label="จัดการข้อมูลร้านค้า" icon="🏢" name="shop" />
           {openDropdown.shop && (
             <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
               <li>
-                <Link to="/admin/finance" className={`nav-link text-white ps-4 ${isActive('/admin/finance') ? 'active' : ''}`}>💰 Finance</Link>
+                <Link to="/admin/finance" className={`nav-link text-white ps-4 ${isActive('/admin/finance') ? 'active' : ''}`}>💰 ฐานการเวินร้านค้า</Link>
               </li>
               <li>
-                <Link to="/admin/quotation" className={`nav-link text-white ps-4 ${isActive('/admin/quotation') ? 'active' : ''}`}>📄 Quotation</Link>
+                <Link to="/admin/quotation" className={`nav-link text-white ps-4 ${isActive('/admin/quotation') ? 'active' : ''}`}>📄 ใบเสนอราคา</Link>
               </li>
               <li>
-                <Link to="/admin/report" className={`nav-link text-white ps-4 ${isActive('/admin/report') ? 'active' : ''}`}>📊 Report</Link>
+                <DropdownToggle label="รายงาน" icon="📊" name="reports" />
+                {openDropdown.reports && (
+                  <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                    <li>
+                      <Link to="/admin/report/sales" className={`nav-link text-white ps-4 ${isActive('/admin/report/sales') ? 'active' : ''}`}>� รายงานยอดขาย</Link>
+                    </li>
+                    <li>
+                      <Link to="/admin/report/material" className={`nav-link text-white ps-4 ${isActive('/admin/report/material') ? 'active' : ''}`}>🧱 รายงานวัสดุ</Link>
+                    </li>
+                   <li>
+                      <Link to="/admin/report/order" className={`nav-link text-white ps-4 ${isActive('/admin/report/order') ? 'active' : ''}`}>📑 รายงานคำสั่งซื้อ</Link>
+                  </li>
+                    <li>
+                      <Link to="/admin/report/profit" className={`nav-link text-white ps-4 ${isActive('/admin/report/profit') ? 'active' : ''}`}>📈 รายงานกำไร</Link>
+                    </li>
+                  </ul>
+                )}
+              </li>
+            
+              <li>
+                <Link to="/admin/withdraw" className={`nav-link text-white ps-4 ${isActive('/admin/withdraw') ? 'active' : ''}`}>🏦 เบิกวัสดุ</Link>
               </li>
               <li>
-                <Link to="/admin/sales" className={`nav-link text-white ps-4 ${isActive('/admin/sales') ? 'active' : ''}`}>🛒 Sales</Link>
-              </li>
-              <li>
-                <Link to="/admin/withdraw" className={`nav-link text-white ps-4 ${isActive('/admin/withdraw') ? 'active' : ''}`}>🏦 Withdraw</Link>
-              </li>
-              <li>
-                <Link to="/admin/material" className={`nav-link text-white ps-4 ${isActive('/admin/material') ? 'active' : ''}`}>🧱 Material</Link>
+                <Link to="/admin/material" className={`nav-link text-white ps-4 ${isActive('/admin/material') ? 'active' : ''}`}>🧱 วัสดุที่ใช้</Link>
               </li>
             </ul>
           )}
@@ -195,14 +206,14 @@ export default function SidebarAdmin() {
         {/* อื่นๆ */}
         <li className="nav-item">
           <Link to="/admin/contact" className={`nav-link text-white ${isActive('/admin/contact') ? 'active' : ''}`}>
-            📞 {!collapsed && 'ข้อมูลร้านค้า'}
+            📞 ข้อมูลร้านค้า
           </Link>
         </li>
 
         {/* Logout */}
         <li className="nav-item mt-3">
           <button onClick={handleLogout} className="btn btn-link nav-link text-white text-start">
-            🔓 {!collapsed && 'ออกจากระบบ'}
+            🔓 ออกจากระบบ
           </button>
         </li>
       </ul>

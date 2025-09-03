@@ -1,9 +1,9 @@
-
 const db = require('../db'); // <- ได้ instance ของ knex
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sendEmail = require('../utils/sendEmail');
 
 // === เตรียม multer สำหรับ profile picture ===
 const profileUploadDir = path.join(__dirname, '..', 'public', 'uploads', 'profiles');
@@ -42,7 +42,18 @@ exports.uploadProfilePicture = profileUpload.single('profile_picture');
 exports.getAllCustomers = async (req, res) => {
   try {
     const rows = await db('customers')
-      .select('id', 'email', 'name', 'created_at', 'updated_at', 'status', 'profile_picture');
+      .leftJoin('subdistricts', 'customers.subdistrict_id', 'subdistricts.id')
+      .leftJoin('districts', 'customers.district_id', 'districts.id')
+      .leftJoin('provinces', 'customers.province_id', 'provinces.id')
+      .select(
+        'customers.id', 'customers.email', 'customers.name', 'customers.created_at', 'customers.updated_at', 'customers.status', 'customers.profile_picture',
+        'customers.phone', 'customers.address',
+        'customers.subdistrict_id', 'customers.district_id', 'customers.province_id',
+        'subdistricts.name_th as subdistrict_name',
+        'districts.name_th as district_name',
+        'provinces.name_th as province_name',
+        'subdistricts.postal_code'
+      );
 
     res.json(rows);
   } catch (error) {
@@ -193,36 +204,59 @@ exports.login = async (req, res) => {
 
 // สมัครสมาชิกลูกค้า
 exports.registerCustomer = async (req, res) => {
-  const { email, password, username } = req.body;
-  const name = username;
-
-  console.log("REQ BODY:", req.body); // ✅ ตรวจสอบข้อมูลที่ส่งมา
+  let { email, password, username } = req.body;
+  email = (email || '').trim().toLowerCase();
+  const name = (username || '').trim();
 
   try {
-    const existing = await db('customers').where({ email }).first();
-    if (existing) {
+    // ตรวจสอบอีเมลซ้ำ (case-insensitive)
+    const existingEmail = await db('customers')
+      .whereRaw('LOWER(email) = ?', [email])
+      .first();
+    if (existingEmail) {
       return res.status(400).json({ message: 'อีเมลนี้มีอยู่แล้ว' });
+    }
+    // ตรวจสอบชื่อผู้ใช้ซ้ำ
+    const existingName = await db('customers').where({ name }).first();
+    if (existingName) {
+      return res.status(400).json({ message: 'ชื่อผู้ใช้นี้มีอยู่แล้ว' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const now = new Date();
 
-  const customerData = {
-  email,
-  password: hashedPassword,
-  name, // ✅ ต้องไม่เป็น undefined
-  created_at: now,
-  updated_at: now,
-  status: 'active',
-  profile_picture: null,
-};
-    console.log("INSERTING:", customerData); // ✅ ตรวจสอบข้อมูลก่อน insert
+    const customerData = {
+      email,
+      password: hashedPassword,
+      name,
+      created_at: now,
+      updated_at: now,
+      status: 'active',
+      profile_picture: null,
+    };
 
     const [id] = await db('customers').insert(customerData);
-    res.status(201).json({ message: 'สมัครสมาชิกสำเร็จ', id });
 
+    // === ส่งอีเมลยืนยันการสมัคร ===
+    const subject = "ยินดีต้อนรับสู่ ALShop";
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #222;">
+        <h2 style="color: #16a34a;">สวัสดีคุณ ${name}</h2>
+        <p>ขอบคุณที่สมัครสมาชิกกับ <b>ALShop</b>!</p>
+        <p>บัญชีของคุณถูกสร้างเรียบร้อยแล้ว คุณสามารถเข้าสู่ระบบได้ทันทีด้วยอีเมล <b>${email}</b></p>
+        <hr style="margin: 24px 0;">
+        <p>หากคุณไม่ได้เป็นผู้สมัครสมาชิกนี้ กรุณาติดต่อทีมงาน ALShop โดยตรงที่ <a href="mailto:support@alshop.com">support@alshop.com</a></p>
+        <p style="margin-top: 32px; color: #555; font-size: 14px;">ขอขอบคุณที่ไว้วางใจใช้บริการ<br>ทีมงาน ALShop<br>www.alshop.com</p>
+      </div>
+    `;
+    const emailResult = await sendEmail(email, subject, html);
+
+    if (!emailResult) {
+      return res.status(201).json({ message: 'สมัครสมาชิกสำเร็จ แต่ส่งอีเมลไม่สำเร็จ กรุณาตรวจสอบอีเมลของคุณ', id, emailSent: false });
+    }
+    res.status(201).json({ message: 'สมัครสมาชิกสำเร็จ', id, emailSent: true });
   } catch (error) {
-    console.error('Error in registerCustomer:', error); // ✅ ตรงนี้ดูใน Terminal
+    console.error('Error in registerCustomer:', error);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการสมัครสมาชิก' });
   }
 };
@@ -233,8 +267,19 @@ exports.getCustomerById = async (req, res) => {
 
   try {
     const user = await db('customers')
-      .select('id', 'email', 'name', 'status', 'profile_picture', 'created_at', 'updated_at')
-      .where({ id })
+      .leftJoin('subdistricts', 'customers.subdistrict_id', 'subdistricts.id')
+      .leftJoin('districts', 'customers.district_id', 'districts.id')
+      .leftJoin('provinces', 'customers.province_id', 'provinces.id')
+      .select(
+        'customers.id', 'customers.email', 'customers.name', 'customers.status', 'customers.profile_picture', 'customers.created_at', 'customers.updated_at',
+        'customers.phone', 'customers.address',
+        'customers.subdistrict_id', 'customers.district_id', 'customers.province_id',
+        'subdistricts.name_th as subdistrict_name',
+        'districts.name_th as district_name',
+        'provinces.name_th as province_name',
+        'subdistricts.postal_code'
+      )
+      .where('customers.id', id)
       .first();
 
     if (!user) {
@@ -251,8 +296,11 @@ exports.getCustomerById = async (req, res) => {
 // แก้ไขโปรไฟล์ลูกค้า
 exports.updateCustomerProfile = async (req, res) => {
   const { id } = req.params;
-  const { name, email } = req.body;
+  const { name, email, phone, address, subdistrict_id, district_id, province_id, postal_code } = req.body;
   let profile_picture = req.body.profile_picture;
+
+  // helper สำหรับ integer หรือ null
+  const toIntOrNull = v => (v === '' || v === 'null' || v == null ? null : Number(v));
 
   try {
     // ถ้ามีการอัปโหลดรูปใหม่
@@ -261,7 +309,20 @@ exports.updateCustomerProfile = async (req, res) => {
     }
 
     const updated_at = new Date();
-    const updateData = { name, email, updated_at };
+    const updateData = { 
+      name, 
+      email, 
+      phone, 
+      address, 
+      subdistrict_id: toIntOrNull(subdistrict_id),
+      district_id: toIntOrNull(district_id),
+      province_id: toIntOrNull(province_id),
+      updated_at
+    };
+    // เพิ่ม postal_code ถ้ามี
+    if (typeof postal_code !== 'undefined') {
+      updateData.postal_code = postal_code;
+    }
     
     // เพิ่ม profile_picture ในข้อมูลที่จะอัปเดตเฉพาะเมื่อมีการอัปโหลดรูป
     if (profile_picture) {
@@ -272,9 +333,12 @@ exports.updateCustomerProfile = async (req, res) => {
       .where({ id })
       .update(updateData);
 
-    // ดึงข้อมูล user ที่อัปเดตล่าสุด
+    // ดึงข้อมูล user ที่อัปเดตล่าสุด (ส่งฟิลด์ครบ)
     const updatedUser = await db('customers')
-      .select('id', 'email', 'name', 'status', 'profile_picture', 'created_at', 'updated_at')
+      .select(
+        'id', 'email', 'name', 'status', 'profile_picture', 'created_at', 'updated_at',
+        'phone', 'address', 'province_id', 'district_id', 'subdistrict_id', 'postal_code'
+      )
       .where({ id })
       .first();
 
@@ -318,5 +382,39 @@ exports.getCustomerFavorites = async (req, res) => {
       message: 'เกิดข้อผิดพลาดในการดึงรายการโปรด',
       error: error.message 
     });
+  }
+};
+
+// ดึงข้อมูลจังหวัด
+exports.getProvinces = async (req, res) => {
+  try {
+    const provinces = await db('provinces').select('id', 'name_th');
+    res.json(provinces);
+  } catch (error) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงจังหวัด' });
+  }
+};
+
+// ดึงข้อมูลอำเภอ (districts) ตาม province_id
+exports.getDistricts = async (req, res) => {
+  const { province_id } = req.query;
+  try {
+    if (!province_id) return res.status(400).json({ message: 'ต้องระบุ province_id' });
+    const districts = await db('districts').where('province_id', province_id).select('id', 'name_th');
+    res.json(districts);
+  } catch (error) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงอำเภอ' });
+  }
+};
+
+// ดึงข้อมูลตำบล (subdistricts) ตาม district_id
+exports.getSubdistricts = async (req, res) => {
+  const { district_id } = req.query;
+  try {
+    if (!district_id) return res.status(400).json({ message: 'ต้องระบุ district_id' });
+    const subdistricts = await db('subdistricts').where('district_id', district_id).select('id', 'name_th', 'postal_code');
+    res.json(subdistricts);
+  } catch (error) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงตำบล' });
   }
 };

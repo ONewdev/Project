@@ -93,97 +93,104 @@ function Payments() {
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 bg-white rounded-xl shadow p-8">
-      <h2 className="text-2xl font-bold mb-6 text-green-700">แจ้งชำระเงิน</h2>
-      {/* QR Code สำหรับโอนเงิน */}
-      <div className="mb-6 flex flex-col items-center">
-        <img
-          src='/images/qr-payment.png'
-          alt="QR Code สำหรับโอนเงิน"
-          className="w-48 h-48 object-contain border rounded shadow mb-2"
-          onError={e => { e.target.style.display = 'none'; }}
-        />
-        <div className="text-gray-500 text-sm">สแกนเพื่อโอนเงินผ่าน Mobile Banking</div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white py-10 px-2">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 border border-green-100">
+        <h2 className="text-3xl font-bold mb-8 text-green-700 text-center tracking-tight">แจ้งชำระเงิน</h2>
+        {/* QR Code สำหรับโอนเงิน */}
+        <div className="mb-8 flex flex-col items-center">
+          <div className="bg-gray-100 rounded-xl p-4 shadow-sm mb-2">
+            <img
+              src='/images/qr-payment.png'
+              alt="QR Code สำหรับโอนเงิน"
+              className="w-52 h-52 object-contain rounded-lg border border-gray-200"
+              onError={e => { e.target.style.display = 'none'; }}
+            />
+          </div>
+          <div className="text-gray-500 text-sm">สแกนเพื่อโอนเงินผ่าน Mobile Banking</div>
+        </div>
+        {/* แสดงรายละเอียด order ถ้ามี */}
+        {orderDetail && (
+          <div className="mb-8 p-5 bg-green-50 rounded-xl border border-green-100">
+            <div className="font-semibold mb-3 text-green-700 text-lg flex items-center gap-2">
+              <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h18M3 17h18" /></svg>
+              รายละเอียดคำสั่งซื้อ
+            </div>
+            {orderDetail.items && orderDetail.items.length > 0 ? (
+              <ul className="mb-2 divide-y divide-green-100">
+                {orderDetail.items.map((item, idx) => (
+                  <li key={item.id || idx} className="py-2 flex justify-between items-center">
+                    <span className="font-medium text-gray-800">{item.product_name}</span>
+                    <span className="text-gray-500">x {item.quantity}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-gray-400">ไม่พบรายการสินค้าในออเดอร์นี้</div>
+            )}
+            <div className="mt-2 text-right font-semibold text-green-700">ยอดรวม: ฿{orderDetail.total_price ? parseFloat(orderDetail.total_price).toLocaleString() : '-'}</div>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-7">
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">เลขที่ออเดอร์ <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              name="order_id"
+              value={form.order_id}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 placeholder:text-gray-400 text-lg"
+              required
+              placeholder="กรอกเลขที่ออเดอร์"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">จำนวนเงินที่โอน (บาท) <span className="text-red-500">*</span></label>
+            <input
+              type="number"
+              name="amount"
+              value={form.amount}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 placeholder:text-gray-400 text-lg"
+              required
+              min="0"
+              step="0.01"
+              readOnly={!!orderDetail && (orderDetail.total_price !== undefined && orderDetail.total_price !== null && Number(orderDetail.total_price) > 0)}
+              placeholder={orderDetail && orderDetail.total_price !== undefined && orderDetail.total_price !== null && Number(orderDetail.total_price) > 0 ? `฿${Number(orderDetail.total_price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}` : 'กรอกจำนวนเงินที่โอน'}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">สลิปการโอนเงิน <span className="text-red-500">*</span></label>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">หมายเหตุ (ถ้ามี)</label>
+            <textarea
+              name="note"
+              value={form.note}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 placeholder:text-gray-400 text-lg"
+              rows={2}
+              placeholder="รายละเอียดเพิ่มเติมหรือหมายเหตุ"
+            />
+          </div>
+          {successMsg && <div className="text-green-600 text-center font-semibold text-lg">{successMsg}</div>}
+          {errorMsg && <div className="text-red-600 text-center font-semibold text-lg">{errorMsg}</div>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg shadow-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 transition text-lg"
+          >
+            {loading ? 'กำลังส่งข้อมูล...' : 'แจ้งชำระเงิน'}
+          </button>
+        </form>
       </div>
-      {/* แสดงรายละเอียด order ถ้ามี */}
-      {orderDetail && (
-        <div className="mb-6 p-4 bg-gray-50 rounded border">
-          <div className="font-semibold mb-2">รายละเอียดคำสั่งซื้อ</div>
-          {orderDetail.items && orderDetail.items.length > 0 ? (
-            <ul className="mb-2">
-              {orderDetail.items.map((item, idx) => (
-                <li key={item.id || idx} className="mb-1">
-                  <span className="font-medium">{item.product_name}</span>
-                  {item.quantity && (
-                    <span> x {item.quantity}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div>ไม่พบรายการสินค้าในออเดอร์นี้</div>
-          )}
-          <div>ยอดรวม: ฿{orderDetail.total_price ? parseFloat(orderDetail.total_price).toLocaleString() : '-'}</div>
-        </div>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">เลขที่ออเดอร์</label>
-          <input
-            type="text"
-            name="order_id"
-            value={form.order_id}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">จำนวนเงินที่โอน (บาท)</label>
-          <input
-            type="number"
-            name="amount"
-            value={form.amount}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400"
-            required
-            min="0"
-            step="0.01"
-            readOnly={!!orderDetail && (orderDetail.total_price !== undefined && orderDetail.total_price !== null && Number(orderDetail.total_price) > 0)}
-            placeholder={orderDetail && orderDetail.total_price !== undefined && orderDetail.total_price !== null && Number(orderDetail.total_price) > 0 ? `฿${Number(orderDetail.total_price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}` : ''}
-          />
-        </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">สลิปการโอนเงิน</label>
-          <input
-            type="file"
-            name="image"
-            accept="image/*"
-            onChange={handleChange}
-            className="w-full"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">หมายเหตุ (ถ้ามี)</label>
-          <textarea
-            name="note"
-            value={form.note}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400"
-            rows={2}
-          />
-        </div>
-        {successMsg && <div className="text-green-600">{successMsg}</div>}
-        {errorMsg && <div className="text-red-600">{errorMsg}</div>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-200 shadow"
-        >
-          {loading ? 'กำลังส่งข้อมูล...' : 'แจ้งชำระเงิน'}
-        </button>
-      </form>
     </div>
   );
 }

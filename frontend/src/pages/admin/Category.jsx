@@ -111,17 +111,17 @@ function Category() {
   ];
 
   return (
-    <div className="container mx-auto mt-8 pl-24">
+    <div className="container mx-auto mt-8 pl-24 font-kanit">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">จัดการหมวดหมู่สินค้า</h2>
-        <button onClick={handleAdd} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        <h2 className="text-2xl font-bold font-kanit">จัดการหมวดหมู่สินค้า</h2>
+        <button onClick={handleAdd} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-kanit">
           + เพิ่มหมวดหมู่
         </button>
       </div>
       {categories.length > 0 ? (
         <DataTable columns={columns} data={categories} pagination />
       ) : (
-        <p className="text-gray-500">ไม่มีข้อมูล</p>
+  <p className="text-gray-500 font-kanit">ไม่มีข้อมูล</p>
       )}
 
       {/* Modal */}
@@ -134,13 +134,13 @@ function Category() {
           ></div>
 
           {/* Modal */}
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 font-kanit">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">{editCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่'}</h3>
+              <h3 className="text-lg font-semibold font-kanit">{editCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่'}</h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors font-kanit"
               >
                 <FaTimes />
               </button>
@@ -150,7 +150,7 @@ function Category() {
             <form onSubmit={handleSubmit}>
               <div className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 font-kanit">
                     ชื่อหมวดหมู่
                   </label>
                   <input
@@ -158,7 +158,7 @@ function Category() {
                     value={form.category_name}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-kanit"
                   />
                 </div>
                 {/* เพิ่มฟิลด์อื่นๆ ได้ตามต้องการ */}
@@ -169,13 +169,13 @@ function Category() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors font-kanit"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
+                  className="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors font-kanit"
                 >
                   บันทึก
                 </button>

@@ -1,174 +1,143 @@
-import React from 'react'
+import { useState } from "react";
 
+export default function WithdrawPage() {
+  const [requisition, setRequisition] = useState({
+    requisition_by: "",
+    remarks: "",
+  });
 
-import { useEffect, useState } from 'react';
-import Swal from 'sweetalert2';
+  const [items, setItems] = useState([
+    { id: Date.now(), material_id: "", name: "", qty_req: 1, qty_issued: 0, remarks: "" },
+  ]);
 
-function Withdraw() {
-  const [withdraws, setWithdraws] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editWithdraw, setEditWithdraw] = useState(null);
-  const [form, setForm] = useState({ name: '', quantity: '' });
-  const host = import.meta.env.VITE_HOST;
-
-  useEffect(() => {
-    fetch(`${host}/api/withdraws`)
-      .then(res => res.json())
-      .then(data => setWithdraws(data))
-      .catch(() => setWithdraws([]));
-  }, [host]);
-
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleAdd = () => {
-    setEditWithdraw(null);
-    setForm({ name: '', quantity: '' });
-    setShowModal(true);
+  const handleItemChange = (id, field, value) => {
+    setItems(items.map(item =>
+      item.id === id ? { ...item, [field]: value } : item
+    ));
   };
 
-  const handleEdit = withdraw => {
-    setEditWithdraw(withdraw);
-    setForm({ name: withdraw.name, quantity: withdraw.quantity });
-    setShowModal(true);
+  const addItem = () => {
+    setItems([...items, { id: Date.now(), material_id: "", name: "", qty_req: 1, qty_issued: 0, remarks: "" }]);
   };
 
-  const handleDelete = id => {
-    Swal.fire({
-      title: 'ลบเบิกวัสดุ?',
-      text: 'คุณต้องการลบข้อมูลเบิกวัสดุนี้หรือไม่',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'ใช่, ลบเลย',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#16a34a',
-    }).then(result => {
-      if (result.isConfirmed) {
-        fetch(`${host}/api/withdraws/${id}`, { method: 'DELETE' })
-          .then(res => res.json())
-          .then(() => {
-            setWithdraws(prev => prev.filter(a => a.id !== id));
-            Swal.fire('ลบแล้ว!', '', 'success');
-          });
+  const handleSubmit = async () => {
+    const data = { requisition, items };
+
+    try {
+      const res = await fetch("http://localhost:5000/api/requisition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        alert("✅ บันทึกใบเบิกสำเร็จ! เลขที่: " + result.requisitionId);
+        // reset form
+        setRequisition({ requisition_by: "", remarks: "" });
+        setItems([{ id: Date.now(), material_id: "", name: "", qty_req: 1, qty_issued: 0, remarks: "" }]);
+      } else {
+        alert("❌ บันทึกไม่สำเร็จ: " + result.error);
       }
-    });
-  };
-
-  const handleSubmit = e => {
-    e.preventDefault();
-    if (editWithdraw) {
-      // update
-      fetch(`${host}/api/withdraws/${editWithdraw.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setWithdraws(prev => prev.map(a => (a.id === editWithdraw.id ? { ...a, ...form } : a)));
-          setShowModal(false);
-          Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเบิกวัสดุแล้ว', 'success');
-        });
-    } else {
-      // create
-      fetch(`${host}/api/withdraws`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setWithdraws(prev => [...prev, data]);
-          setShowModal(false);
-          Swal.fire('สำเร็จ', 'เพิ่มข้อมูลเบิกวัสดุแล้ว', 'success');
-        });
+    } catch (err) {
+      console.error("Error:", err);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     }
   };
 
   return (
-    <div className="container mx-auto mt-8 pl-24">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">จัดการเบิกวัสดุ</h2>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          + เพิ่มเบิกวัสดุ
-        </button>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded shadow">
+    <div className="min-h-screen bg-gray-50 p-6 flex justify-center">
+      <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-8">
+        
+        {/* Requisition Info */}
+        <h2 className="text-xl font-bold mb-2">ใบเบิกวัสดุ</h2>
+        <input
+          className="border p-2 mb-2 w-full"
+          placeholder="ผู้เบิก"
+          value={requisition.requisition_by}
+          onChange={e => setRequisition({ ...requisition, requisition_by: e.target.value })}
+        />
+        <textarea
+          className="border p-2 mb-4 w-full"
+          placeholder="หมายเหตุ"
+          value={requisition.remarks}
+          onChange={e => setRequisition({ ...requisition, remarks: e.target.value })}
+        />
+
+        {/* Items */}
+        <h2 className="text-xl font-bold mb-2">รายการวัสดุ</h2>
+        <table className="w-full border-collapse border text-sm mb-4">
           <thead>
-            <tr className="bg-green-100 text-green-800">
-              <th className="py-2 px-4">ชื่อวัสดุ</th>
-              <th className="py-2 px-4">จำนวน</th>
-              <th className="py-2 px-4">Actions</th>
+            <tr className="bg-gray-100">
+              <th className="border px-2 py-1">รหัสวัสดุ</th>
+              <th className="border px-2 py-1">ชื่อวัสดุ</th>
+              <th className="border px-2 py-1">จำนวนที่ขอ</th>
+              <th className="border px-2 py-1">จำนวนที่จ่าย</th>
+              <th className="border px-2 py-1">หมายเหตุ</th>
             </tr>
           </thead>
           <tbody>
-            {withdraws.length === 0 ? (
-              <tr><td colSpan={3} className="text-center py-4 text-gray-500">ไม่มีข้อมูล</td></tr>
-            ) : (
-              withdraws.map(withdraw => (
-                <tr key={withdraw.id} className="border-b">
-                  <td className="py-2 px-4">{withdraw.name}</td>
-                  <td className="py-2 px-4">{withdraw.quantity}</td>
-                  <td className="py-2 px-4 flex gap-2">
-                    <button
-                      onClick={() => handleEdit(withdraw)}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >แก้ไข</button>
-                    <button
-                      onClick={() => handleDelete(withdraw.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                    >ลบ</button>
-                  </td>
-                </tr>
-              ))
-            )}
+            {items.map((item) => (
+              <tr key={item.id}>
+                <td className="border px-2 py-1">
+                  <input
+                    className="w-20 border px-1"
+                    value={item.material_id}
+                    onChange={e => handleItemChange(item.id, "material_id", e.target.value)}
+                  />
+                </td>
+                <td className="border px-2 py-1">
+                  <input
+                    className="w-full border px-1"
+                    value={item.name}
+                    onChange={e => handleItemChange(item.id, "name", e.target.value)}
+                  />
+                </td>
+                <td className="border px-2 py-1">
+                  <input
+                    type="number"
+                    className="w-20 border px-1 text-center"
+                    value={item.qty_req}
+                    onChange={e => handleItemChange(item.id, "qty_req", parseInt(e.target.value))}
+                  />
+                </td>
+                <td className="border px-2 py-1">
+                  <input
+                    type="number"
+                    className="w-20 border px-1 text-center"
+                    value={item.qty_issued}
+                    onChange={e => handleItemChange(item.id, "qty_issued", parseInt(e.target.value))}
+                  />
+                </td>
+                <td className="border px-2 py-1">
+                  <input
+                    className="w-full border px-1"
+                    value={item.remarks}
+                    onChange={e => handleItemChange(item.id, "remarks", e.target.value)}
+                  />
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
-      </div>
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setShowModal(false)}></div>
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">{editWithdraw ? 'แก้ไขเบิกวัสดุ' : 'เพิ่มเบิกวัสดุ'}</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อวัสดุ</label>
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">จำนวน</label>
-                <input
-                  name="quantity"
-                  value={form.quantity}
-                  onChange={handleChange}
-                  type="number"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">ยกเลิก</button>
-                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">บันทึก</button>
-              </div>
-            </form>
-          </div>
+
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded"
+          onClick={addItem}
+        >
+          + เพิ่มรายการ
+        </button>
+
+        {/* Submit */}
+        <div className="text-right mt-6">
+          <button
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg"
+            onClick={handleSubmit}
+          >
+            บันทึกใบเบิก
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-export default Withdraw

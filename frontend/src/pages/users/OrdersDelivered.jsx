@@ -51,6 +51,23 @@ function OrdersDelivered() {
                   <span className="font-semibold text-lg">฿{Number(order.total_price).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <span className="text-green-600">สำเร็จแล้ว</span>
+                <div className="mt-3 flex gap-2 flex-wrap">
+                  <button
+                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                    onClick={() => navigate(`/users/orders/${order.id}`)}
+                  >
+                    ดูรายละเอียด
+                  </button>
+                  <a
+                    href={`${host}/api/orders/${order.id}/receipt`}
+                    className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-xs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={`receipt_order_${order.id}.pdf`}
+                  >
+                    ดูใบเสร็จ
+                  </a>
+                </div>
               </div>
             ))}
           </div>

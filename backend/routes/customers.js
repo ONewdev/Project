@@ -13,7 +13,21 @@ router.get('/profile', authenticateCustomer, async (req, res) => {
   try {
     const db = require('../db');
     const user = await db('customers')
-      .select('id', 'email', 'name', 'status', 'profile_picture', 'created_at', 'updated_at')
+      .select(
+        'id',
+        'email',
+        'name',
+        'status',
+        'profile_picture',
+        'created_at',
+        'updated_at',
+        'phone',
+        'address',
+        'province_id',
+        'district_id',
+        'subdistrict_id',
+        'postal_code'
+      )
       .where({ id: req.customer.user_id })
       .first();
 
@@ -27,6 +41,12 @@ router.get('/profile', authenticateCustomer, async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' });
   }
 });
+
+
+// ดึงข้อมูลที่อยู่ของลูกค้า (ต้องมาก่อน /:id)
+router.get('/provinces', customerController.getProvinces);
+router.get('/districts', customerController.getDistricts);
+router.get('/subdistricts', customerController.getSubdistricts);
 
 //ดึง
 router.get('/', customerController.getAllCustomers);
@@ -51,5 +71,6 @@ router.get('/:id/favorites', customerController.getCustomerFavorites);
 router.delete('/:id/delete', customerController.deleteCustomerProfile);
 // ลบเฉพาะรูปโปรไฟล์ ไม่ลบบัญชี
 router.delete('/:id/profile-picture', customerController.deleteProfilePicture);
+
 
 module.exports = router;
