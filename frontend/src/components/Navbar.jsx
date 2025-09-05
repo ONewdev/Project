@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { ShoppingCart, UserCircle, Bell } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -7,12 +7,17 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const host = import.meta.env.VITE_HOST;
+  const host = import.meta.env.VITE_HOST || '';
   const navigate = useNavigate();
   const location = useLocation();
   const [cartCount, setCartCount] = useState(0);
   const [showCartPopup, setShowCartPopup] = useState(false);
   const [cartItems, setCartItems] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(() => {
+    const cached = Number(localStorage.getItem('notif_count') || 0);
+    return Number.isFinite(cached) ? cached : 0;
+  });
+
 
 
   // Load Google Fonts for Thai language support
@@ -46,29 +51,73 @@ export default function Navbar() {
     };
   }, [host]);
 
-useEffect(() => {
-  const updateCart = () => {
-    let cartKey;
-    if (user) {
-      cartKey = `cart_${user.id}`;
-    } else {
-      cartKey = 'cart_guest';
+  useEffect(() => {
+    const updateCart = () => {
+      let cartKey;
+      if (user) {
+        cartKey = `cart_${user.id}`;
+      } else {
+        cartKey = 'cart_guest';
+      }
+      const items = JSON.parse(localStorage.getItem(cartKey)) || [];
+      setCartItems(items);
+      const totalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      setCartCount(totalItems);
+    };
+
+    updateCart();
+    window.addEventListener('cartUpdated', updateCart);
+    window.addEventListener('storage', updateCart);
+
+    return () => {
+      window.removeEventListener('cartUpdated', updateCart);
+      window.removeEventListener('storage', updateCart);
+    };
+  }, [user]);
+
+
+  useEffect(() => {
+    if (!user || !user.id) {
+      setNotificationCount(0);
+      return;
     }
-    const items = JSON.parse(localStorage.getItem(cartKey)) || [];
-    setCartItems(items);
-    const totalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    setCartCount(totalItems);
-  };
 
-  updateCart();
-  window.addEventListener('cartUpdated', updateCart);
-  window.addEventListener('storage', updateCart);
+    let aborted = false;
 
-  return () => {
-    window.removeEventListener('cartUpdated', updateCart);
-    window.removeEventListener('storage', updateCart);
-  };
-}, [user]);
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch(`${host}/api/notifications/unread_count?customer_id=${user.id}`, {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (!aborted) {
+          const n = Number(data?.count || 0);
+          setNotificationCount(n);
+          try { localStorage.setItem('notif_count', String(n)); } catch { }
+        }
+      } catch (e) {
+        // เงียบไว้
+      }
+    };
+
+    fetchUnread();
+
+    // ฟังอีเวนต์จากหน้าอื่น ๆ เพื่อรีเฟรชตัวเลข
+    const onUpdated = () => fetchUnread();
+    window.addEventListener('notificationsUpdated', onUpdated);
+    window.addEventListener('userChanged', fetchUnread);
+
+    // (ออปชัน) โพลลิ่งทุก 30 วิ
+    const t = setInterval(fetchUnread, 30000);
+
+    return () => {
+      aborted = true;
+      window.removeEventListener('notificationsUpdated', onUpdated);
+      window.removeEventListener('userChanged', fetchUnread);
+      clearInterval(t);
+    };
+  }, [host, user?.id]);
+
 
   return (
     <header
@@ -161,6 +210,11 @@ useEffect(() => {
                 onClick={() => navigate('/users/notifications')}
               >
                 <Bell className="w-7 h-7 text-green-700" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center">
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </span>
+                )}
                 {/* สามารถเพิ่ม badge แจ้งเตือนได้ที่นี่ */}
               </button>
             )}
@@ -229,13 +283,20 @@ useEffect(() => {
                 )}
               </div>
             ) : (
-              <div className="hidden md:flex">
+              <div className="hidden md:flex space-x-4">
                 <button
                   onClick={() => navigate('/login')}
                   className="px-5 py-2 text-white bg-green-600 hover:bg-green-700 rounded-full transition duration-200 font-semibold"
                   style={{ fontFamily: "'Prompt', sans-serif" }}
                 >
                   เข้าสู่ระบบ
+                </button>
+                <button
+                  onClick={() => navigate('/register')}
+                  className="px-5 py-2 text-green-700 border border-green-600 hover:bg-green-50 rounded-full transition duration-200 font-semibold"
+                  style={{ fontFamily: "'Prompt', sans-serif" }}
+                >
+                  สมัครสมาชิก
                 </button>
               </div>
             )}
@@ -272,6 +333,11 @@ useEffect(() => {
                       style={{ position: 'relative' }}
                     >
                       <Bell className="w-7 h-7 text-green-700" />
+                      {notificationCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center">
+                          {notificationCount > 99 ? '99+' : notificationCount}
+                        </span>
+                      )}
                     </button>
                   )}
                   {/* เมนูเฉพาะตอนล็อกอิน */}
@@ -355,16 +421,29 @@ useEffect(() => {
                         </button>
                       </>
                     ) : (
-                      <button
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          navigate('/login');
-                        }}
-                        className="w-full px-5 py-2 text-white bg-green-600 hover:bg-green-700 rounded-full transition duration-200 font-semibold"
-                        style={{ fontFamily: "'Prompt', sans-serif" }}
-                      >
-                        เข้าสู่ระบบ
-                      </button>
+                      <div className="pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            navigate('/login');
+                          }}
+                          className="w-full px-5 py-2 text-white bg-green-600 hover:bg-green-700 rounded-full transition duration-200 font-semibold mb-2"
+                          style={{ fontFamily: "'Prompt', sans-serif" }}
+                        >
+                          เข้าสู่ระบบ
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            navigate('/register');
+                          }}
+                          className="w-full px-5 py-2 text-green-700 border border-green-600 hover:bg-green-50 rounded-full transition duration-200 font-semibold"
+                          style={{ fontFamily: "'Prompt', sans-serif" }}
+                        >
+                          สมัครสมาชิก
+                        </button>
+                      </div>
+
                     )}
                   </div>
                 </div>

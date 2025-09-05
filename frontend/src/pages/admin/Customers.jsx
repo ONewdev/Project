@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DataTable from 'react-data-table-component';
 import Swal from 'sweetalert2';
 import { FaCheck, FaBan, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
@@ -7,19 +7,30 @@ function Customers() {
   const [customers, setCustomers] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editCustomer, setEditCustomer] = useState(null);
+  const [search, setSearch] = useState('');
   const host = import.meta.env.VITE_HOST;
 
   useEffect(() => {
     fetch(`${host}/api/customers`)
       .then((res) => res.json())
-      .then((data) => setCustomers(data))
+      .then((data) => setCustomers(Array.isArray(data) ? data : (data?.data ?? [])))
       .catch((err) => console.error('Fetch error:', err));
-  }, []);
+  }, [host]);
+
+  // กรองจากชื่อหรืออีเมล (ไม่สนตัวพิมพ์เล็กใหญ่)
+  const filteredCustomers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter((c) =>
+      (c.name ?? '').toLowerCase().includes(q) ||
+      (c.email ?? '').toLowerCase().includes(q)
+    );
+  }, [customers, search]);
 
   const handleStatusChange = (id, status) => {
     const statusText = status === 'active' ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
-    const customer = customers.find(c => c.id === id);
-    
+    const customer = customers.find((c) => c.id === id);
+
     Swal.fire({
       title: 'ยืนยันการเปลี่ยนแปลงสถานะ',
       text: `คุณต้องการ${statusText} ${customer?.name || 'ลูกค้า'} หรือไม่?`,
@@ -37,15 +48,9 @@ function Customers() {
           .then((res) => res.json())
           .then(() => {
             setCustomers((prev) =>
-              prev.map((customer) =>
-                customer.id === id ? { ...customer, status } : customer
-              )
+              prev.map((c) => (c.id === id ? { ...c, status } : c))
             );
-            Swal.fire(
-              'สำเร็จ!',
-              `สถานะของ ${customer?.name || 'ลูกค้า'} ถูก${statusText}แล้ว`,
-              'success'
-            );
+            Swal.fire('สำเร็จ!', `สถานะของ ${customer?.name || 'ลูกค้า'} ถูก${statusText}แล้ว`, 'success');
           })
           .catch((err) => {
             console.error('Status change error:', err);
@@ -65,9 +70,7 @@ function Customers() {
       cancelButtonText: 'ยกเลิก',
     }).then((result) => {
       if (result.isConfirmed) {
-        fetch(`${host}/api/customers/${id}`, {
-          method: 'DELETE',
-        })
+        fetch(`${host}/api/customers/${id}`, { method: 'DELETE' })
           .then((res) => res.json())
           .then(() => {
             setCustomers((prev) => prev.filter((c) => c.id !== id));
@@ -93,40 +96,33 @@ function Customers() {
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-    
-    // แยกข้อมูลสำหรับอัปเดตข้อมูลทั่วไป
+
     const { email, name, status } = editCustomer;
     const updateData = { email, name, status };
-    
+
     fetch(`${host}/api/customers/${editCustomer.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updateData),
     })
       .then((res) => res.json())
-      .then((data) => {
+      .then(() => {
         Swal.fire('สำเร็จ', 'อัปเดตข้อมูลลูกค้าแล้ว', 'success');
         setCustomers((prev) =>
-          prev.map((c) => (c.id === editCustomer.id ? editCustomer : c))
+          prev.map((c) => (c.id === editCustomer.id ? { ...c, ...updateData } : c))
         );
         setShowEditModal(false);
       })
-      .catch(() =>
-        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถอัปเดตได้', 'error')
-      );
+      .catch(() => Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถอัปเดตได้', 'error'));
   };
 
+  const safeDate = (d) => (d ? new Date(d).toLocaleString() : '-');
+
   const columns = [
-    { name: 'Email', selector: (row) => row.email },
-    { name: 'Name', selector: (row) => row.name },
-    {
-      name: 'Created At',
-      selector: (row) => new Date(row.created_at).toLocaleString(),
-    },
-    {
-      name: 'Updated At',
-      selector: (row) => new Date(row.updated_at).toLocaleString(),
-    },
+    { name: 'Email', selector: (row) => row.email ?? '-' },
+    { name: 'Name', selector: (row) => row.name ?? '-' },
+    { name: 'Created At', selector: (row) => safeDate(row.created_at) },
+    { name: 'Updated At', selector: (row) => safeDate(row.updated_at) },
     {
       name: 'Status',
       cell: (row) => (
@@ -140,19 +136,25 @@ function Customers() {
           {row.status === 'active' ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
         </span>
       ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
     },
     {
       name: 'Profile Picture',
       cell: (row) =>
         row.profile_picture ? (
           <img
-            src={`http://localhost:3001${row.profile_picture}`}
+            src={`${host}${row.profile_picture}`}
             alt="Profile"
             className="w-10 h-10 rounded-full object-cover"
           />
         ) : (
           'N/A'
         ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
     },
     {
       name: 'Actions',
@@ -191,14 +193,49 @@ function Customers() {
           </button>
         </div>
       ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
     },
   ];
 
   return (
     <div className="container mx-auto mt-8 pl-24">
-      <h2 className="text-2xl font-bold mb-6">รายชื่อสมาชิก</h2>
+      {/* Header + Search */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+        <h2 className="text-2xl font-bold">รายชื่อสมาชิก</h2>
+
+        <div className="relative w-full md:w-80">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ค้นหาชื่อหรืออีเมลลูกค้า…"
+            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 select-none">🔍</span>
+
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="ล้างคำค้น"
+              title="ล้างคำค้น"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
+
       {customers.length > 0 ? (
-        <DataTable columns={columns} data={customers} pagination />
+        filteredCustomers.length > 0 ? (
+          <DataTable columns={columns} data={filteredCustomers} pagination />
+        ) : (
+          <p className="text-gray-500">ไม่พบผลลัพธ์ที่ตรงกับคำค้นหา</p>
+        )
       ) : (
         <p className="text-gray-500">ไม่มีข้อมูล</p>
       )}

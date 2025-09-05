@@ -14,7 +14,7 @@ import {
 } from "../../services/likeFavoriteService";
 
 function Products() {
-  
+
   useEffect(() => {
     const link = document.createElement("link");
     link.href =
@@ -45,17 +45,17 @@ function Products() {
 
   const fetchStatuses = async () => {
     if (!user) return;
-    
-    const ratings = {}; 
+
+    const ratings = {};
     const favs = {};
-    
+
     for (const p of products) {
       try {
         // เรียก API เพื่อดึง rating status
         const ratingRes = await fetch(
           `${host}/api/interactions/rating/status?customer_id=${user.id}&product_id=${p.id}`
         );
-        
+
         if (ratingRes.ok) {
           const ratingData = await ratingRes.json();
           ratings[p.id] = ratingData.rating || 0;
@@ -68,7 +68,7 @@ function Products() {
         const favRes = await fetch(
           `${host}/api/interactions/favorite/status?customer_id=${user.id}&product_id=${p.id}`
         );
-        
+
         if (favRes.ok) {
           const favData = await favRes.json();
           favs[p.id] = favData.favorited;
@@ -82,7 +82,7 @@ function Products() {
         favs[p.id] = false;
       }
     }
-    
+
     setProductRatings(ratings);
     setFavoritedProducts(favs);
   };
@@ -124,13 +124,13 @@ function Products() {
     }
     try {
       await submitRating(user.id, productId, newRating);
-      
+
       // อัปเดต state ทันทีเพื่อการตอบสนองที่รวดเร็ว
       setProductRatings(prevRatings => ({
         ...prevRatings,
         [productId]: newRating,
       }));
-      
+
       // แสดง feedback ให้ user ทราบ
       Swal.fire({
         icon: 'success',
@@ -203,7 +203,7 @@ function Products() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
-  
+
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -448,45 +448,53 @@ function Products() {
       </div>
       <Slidebar />
       <div className="max-w-7xl mx-auto px-4 py-8">
-      
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <select
-              className="w-full sm:w-64 py-3 px-4 border-2 border-green-400 rounded-2xl shadow-lg text-green-700 font-semibold bg-white focus:ring-4 focus:ring-green-300"
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setSearchTerm("");
-              }}
-            >
-              <option value="">ทุกหมวดหมู่</option>
-              {categories.map((cat) => (
-                <option key={cat.category_id} value={cat.category_id}>
-                  {cat.category_name}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          
-            <button
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full border-2 border-green-700 transition mb-2 sm:mb-0 "
-              onClick={() => navigate("/custom-order")}
-            >
-              สั่งทำสินค้า
-            </button>
-          
-          <div className="relative w-full sm:w-96">
-            <input
-              type="text"
-              placeholder="ค้นหาสินค้า ชื่อ/หมวดหมู่"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border-2 border-green-400 bg-white rounded-2xl shadow-lg focus:ring-4 focus:ring-green-300 focus:border-green-500 text-lg font-semibold text-green-700 placeholder-black transition"
-            />
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-green-400 text-2xl pointer-events-none">
-              🔍
-            </span>
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="mb-6 w-full">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-6">
+              {/* Left side: Category + Search side-by-side */}
+              <div className="flex w-full lg:flex-1 gap-4">
+                <select
+                  className="w-full sm:w-64 py-3 px-4 border-2 border-green-400 rounded-2xl shadow-lg text-green-700 font-semibold bg-white focus:ring-4 focus:ring-green-300"
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setSearchTerm("");
+                  }}
+                >
+                  <option value="">ทุกหมวดหมู่</option>
+                  {categories.map((cat) => (
+                    <option key={cat.category_id} value={cat.category_id}>
+                      {cat.category_name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Search input sits right next to category */}
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="ค้นหาสินค้า ชื่อ/หมวดหมู่"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-50 pl-12 pr-3 py-3 border-2 border-green-400 bg-white rounded-2xl shadow-lg focus:ring-4 focus:ring-green-300 focus:border-green-500 text-lg font-semibold text-green-700 placeholder-black transition"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-400 text-xl pointer-events-none">
+                    🔍
+                  </span>
+                </div>
+              </div>
+
+              {/* Right side: Custom order button pinned right */}
+              <div className="w-full lg:w-auto lg:ml-auto">
+                <button
+                  className="w-full lg:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-8 rounded-full border-2 border-green-700 transition"
+                  onClick={() => navigate("/custom-order")}
+                >
+                  สั่งทำสินค้า
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         {/* Compare Bar */}
@@ -581,30 +589,29 @@ function Products() {
                           สั่งซื้อเลย
                         </button>
                       </div>
-                                             <div className="flex gap-2 justify-between mb-2 items-center">
-                         <div className="flex items-center gap-2">
-                           <div className="flex gap-1 star-rating">
-                             {[ 1, 2, 3, 4, 5].map((star) => (
-                               <button
-                                 key={star}
-                                 onClick={() => handleRatingChange(product.id, star)}
-                                 className={`text-xl transition-colors ${
-                                   star === 0
-                                     ? (productRatings[product.id] === 0 ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-300 hover:text-yellow-400')
-                                     : star <= (productRatings[product.id] || 0)
-                                       ? 'text-yellow-400 hover:text-yellow-500'
-                                       : 'text-gray-300 hover:text-yellow-400'
-                                 }`}
-                                 title={star === 0 ? 'ให้คะแนน 0 ดาว' : `ให้คะแนน ${star} ดาว`}
-                               >
-                                 <FaStar />
-                               </button>
-                             ))}
-                           </div>
-                           <span className="text-xs text-gray-500">
-                             ({productRatings[product.id] || 0}/5)
-                           </span>
-                         </div>
+                      <div className="flex gap-2 justify-between mb-2 items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1 star-rating">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                onClick={() => handleRatingChange(product.id, star)}
+                                className={`text-xl transition-colors ${star === 0
+                                  ? (productRatings[product.id] === 0 ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-300 hover:text-yellow-400')
+                                  : star <= (productRatings[product.id] || 0)
+                                    ? 'text-yellow-400 hover:text-yellow-500'
+                                    : 'text-gray-300 hover:text-yellow-400'
+                                  }`}
+                                title={star === 0 ? 'ให้คะแนน 0 ดาว' : `ให้คะแนน ${star} ดาว`}
+                              >
+                                <FaStar />
+                              </button>
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            ({productRatings[product.id] || 0}/5)
+                          </span>
+                        </div>
                         <button
                           onClick={() => handleFavorite(product.id)}
                           className="text-pink-500 hover:text-pink-700 text-2xl transition"
@@ -815,7 +822,7 @@ function Products() {
           </button>
         )}
       </div>
-     
+
       <Footer />
     </div>
   );

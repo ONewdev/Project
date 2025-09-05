@@ -137,6 +137,9 @@ function Material() {
     // เพิ่มไฟล์รูปภาพถ้ามี
     if (selectedFile) {
       formData.append('image', selectedFile);
+    } else if (editMaterial && form.image) {
+      // Preserve existing image when no new file selected
+      formData.append('image', form.image);
     }
 
     if (editMaterial) {

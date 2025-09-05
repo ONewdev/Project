@@ -168,7 +168,7 @@ export default function SidebarAdmin() {
           {openDropdown.shop && (
             <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
               <li>
-                <Link to="/admin/finance" className={`nav-link text-white ps-4 ${isActive('/admin/finance') ? 'active' : ''}`}>💰 ฐานการเวินร้านค้า</Link>
+                <Link to="/admin/finance" className={`nav-link text-white ps-4 ${isActive('/admin/finance') ? 'active' : ''}`}>💰 ฐานการเงินร้านค้า</Link>
               </li>
               <li>
                 <Link to="/admin/quotation" className={`nav-link text-white ps-4 ${isActive('/admin/quotation') ? 'active' : ''}`}>📄 ใบเสนอราคา</Link>
@@ -178,7 +178,7 @@ export default function SidebarAdmin() {
                 {openDropdown.reports && (
                   <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
                     <li>
-                      <Link to="/admin/report/sales" className={`nav-link text-white ps-4 ${isActive('/admin/report/sales') ? 'active' : ''}`}>� รายงานยอดขาย</Link>
+                      <Link to="/admin/report/sales" className={`nav-link text-white ps-4 ${isActive('/admin/report/sales') ? 'active' : ''}`}>📊 รายงานยอดขาย</Link>
                     </li>
                     <li>
                       <Link to="/admin/report/material" className={`nav-link text-white ps-4 ${isActive('/admin/report/material') ? 'active' : ''}`}>🧱 รายงานวัสดุ</Link>

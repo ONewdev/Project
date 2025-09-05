@@ -223,7 +223,7 @@ function Orders() {
 
   return (
     <div className="container mx-auto mt-8 pl-24">
-      <h2 className="text-2xl font-bold mb-6">Order List</h2>
+      <h2 className="text-2xl font-bold mb-6">จัดการคำสั่งซื้อ</h2>
       <div className="mb-4">
         <label className="mr-2">กรองสถานะ:</label>
         <select

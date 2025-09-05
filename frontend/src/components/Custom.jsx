@@ -247,8 +247,8 @@ function Custom() {
               <div>
                 <label style={{ fontSize: 14, color: '#555' }}>หน่วย</label>
                 <select name="unit" value={form.unit} onChange={handleChange} style={selectStyle}>
-                  <option value="cm">cm</option>
-                  <option value="m">m</option>
+                  <option value="cm">เซนติเมตร</option>
+                  <option value="m">เมตร</option>
                 </select>
               </div>
             </div>

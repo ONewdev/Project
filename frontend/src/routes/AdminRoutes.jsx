@@ -51,7 +51,6 @@ export default function AdminRoutes() {
           <Route path="report/order" element={<ReportOrder />} />
           <Route path="report/sales" element={<ReportSales />} />
           <Route path="report/material" element={<ReportMaterial />} />
-          <Route path="report/sales" element={<ReportSales />} />
           <Route path="report/profit" element={<ReportProfit />} />
           <Route path="withdraw" element={<Withdraw />} />
           
